@@ -1,0 +1,17 @@
+locale: en_AU
+timezone: Australia/Sydney
+default_currency: AUD
+db_host: localhost
+db_name: magento
+db_user: root
+db_pass: password
+url: http://hostname.dev/
+secure_base_url: http://hostname.dev/
+use_rewrites: yes
+use_secure: no
+use_secure_admin: no
+admin_firstname: hostname
+admin_lastname: Employee
+admin_email: john@doe.com
+admin_username: admin
+admin_password: password

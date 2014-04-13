@@ -1,0 +1,17 @@
+locale: en_AU
+timezone: Australia/Sydney
+default_currency: AUD
+db_host: localhost
+db_name: magento
+db_user: root
+db_pass: password
+url: http://project-name.dev/
+secure_base_url: http://project-name.dev/
+use_rewrites: yes
+use_secure: no
+use_secure_admin: no
+admin_firstname: ProjectName
+admin_lastname: Employee
+admin_email: john@project-name.com
+admin_username: admin
+admin_password: password

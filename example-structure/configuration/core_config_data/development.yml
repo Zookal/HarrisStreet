@@ -1,0 +1,24 @@
+# URL
+web/unsecure/base_url:
+  default:
+    0: http://project-name.dev/
+web/secure/base_url:
+  default:
+    0: http://project-name.dev/
+web/secure/use_in_frontend:
+  default:
+    0: 0
+web/secure/use_in_adminhtml:
+  default:
+    0: 0
+web/cookie/cookie_domain:
+  default:
+    0: project-name.dev
+
+# DEVELOPER
+dev/log/active:
+  default:
+    0: 1
+admin/security/session_cookie_lifetime:
+  default:
+    0: 114400

@@ -1,0 +1,9 @@
+<config>
+    <skin>project-name</skin>
+    <report>
+        <action>blank</action>
+        <subject>ProjectName Debug Information</subject>
+        <email_address>admin@project-name.com</email_address>
+        <trash>leave</trash>
+    </report>
+</config>

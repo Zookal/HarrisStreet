@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<config>
+    <global>
+        <install>
+            <date><![CDATA[Sat, 20 Apr 2013 08:21:57 +0000]]></date>
+        </install>
+        <crypt>
+            <key><![CDATA[aassddsadfgasdfgsdfgsdf]]></key>
+        </crypt>
+        <disable_local_modules>false</disable_local_modules>
+        <resources>
+            <db>
+                <table_prefix><![CDATA[]]></table_prefix>
+            </db>
+            <default_setup>
+                <connection>
+                    <host><![CDATA[localhost]]></host>
+                    <fromHost><![CDATA[localhost]]></fromHost> <!-- parameter from ProjectName\MagentoInstaller -->
+                    <username><![CDATA[project-name-dev]]></username>
+                    <password><![CDATA[insecure]]></password>
+                    <dbname><![CDATA[project-name-dev]]></dbname>
+                    <initStatements><![CDATA[SET NAMES utf8]]></initStatements>
+                    <model><![CDATA[mysql4]]></model>
+                    <type><![CDATA[pdo_mysql]]></type>
+                    <pdoType><![CDATA[]]></pdoType>
+                    <active>1</active>
+                </connection>
+            </default_setup>
+        </resources>
+        <session_save><![CDATA[db]]></session_save>
+    </global>
+    <admin>
+        <routers>
+            <adminhtml>
+                <args>
+                    <frontName><![CDATA[admin]]></frontName>
+                </args>
+            </adminhtml>
+        </routers>
+    </admin>
+</config>

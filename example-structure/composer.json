@@ -1,0 +1,161 @@
+@todo needs to be updated!
+
+{
+    "name": "project-name/project-name_2013",
+    "description": "The ProjectName Online Store!",
+    "license": "OSL-3.0",
+    "authors": [
+        {
+            "name": "ProjectName",
+            "email": "cyrill@project-name.com"
+        }
+    ],
+    "require": {
+        "magento-hackathon/magento-composer-installer": "dev-master",
+        "magento-hackathon/composer-command-integrator": "dev-master",
+        "Aligent/Security": "dev-master",
+        "composer/composer": "dev-master",
+        "magento/magento": "1.7.0.2",
+        "fbrnc/aoe_managestores": "dev-master",
+        "fbrnc/aoe_quotecleaner": "dev-master",
+        "fbrnc/Aoe_Scheduler": "dev-development",
+        "securepay/sxml": "dev-master#60f6df86cc0be854c427e5630ed859eeae86b03a",
+        "wbl/magento-minify": "dev-master#9761455beb30f3f38c084b157fcb6a26e859c641",
+        "zendesk/zendesk": "dev-master#4bc2b2f0b66c72771c710437730ee7e0fc281db6",
+        "project-name/admintheme": "dev-project-name/admintheme/master",
+        "project-name/aoe_classpathcache": "dev-master",
+        "project-name/cloudcoders-netsuite": "dev-cloudcoders/netsuite/0.4.5",
+        "project-name/ebizmarts-magemonkey": "dev-ebizmarts/magemonkey/1.1.20.zk1",
+        "project-name/fontis_securepay": "dev-fsp-1.0.0",
+        "project-name/mage-composer-installer": "dev-project-name/mage-composer-installer/master",
+        "project-name/mage-custom": "dev-develop",
+        "project-name/mage-solr-bridge": "dev-solrsearch/1.9.5.9",
+        "project-name/webshopapps_matrixrate": "dev-webshopapps/matrixrate/5.0.1"
+    },
+    "require-dev": {
+        "ivanchepurnyi/ecomdev_phpunit": "dev-master"
+    },
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "http://packages.firegento.com"
+        },
+        {
+            "type": "package",
+            "package": {
+                "name": "magento/magento",
+                "version": "1.7.0.2",
+                "dist": {
+                    "url": "http://www.magentocommerce.com/downloads/assets/1.7.0.2/magento-1.7.0.2.tar.gz",
+                    "type": "tar"
+                }
+            }
+        },
+        {
+            "type": "package",
+            "package": {
+                "name": "magento/magento",
+                "version": "1.8.1.0",
+                "dist": {
+                    "url": "http://www.magentocommerce.com/downloads/assets/1.8.1.0/magento-1.8.1.0.tar.gz",
+                    "type": "tar"
+                }
+            }
+        },
+        {
+            "type": "vcs",
+            "url": "git@github.com:ProjectName/project-name-mage-custom.git"
+        },
+        {
+            "type": "vcs",
+            "url": "git@github.com:ProjectName/mage-modules.git"
+        },
+        {
+            "type": "vcs",
+            "url": "git@github.com:ProjectName/fontis_securepay.git"
+        },
+        {
+            "type": "vcs",
+            "url": "git@github.com:ProjectName/Magento-SecurePay.git"
+        },
+        {
+            "type": "vcs",
+            "url": "git@github.com:zendesk/magento_extension.git"
+        },
+        {
+            "type": "vcs",
+            "url": "git@github.com:ProjectName/Magento-Minify.git"
+        },
+        {
+            "type": "vcs",
+            "url": "git@github.com:aligent/Aligent_Security.git"
+        },
+        {
+            "type": "vcs",
+            "url": "git@github.com:ProjectName/Aoe_ClassPathCache.git"
+        }
+
+    ],
+    "config": {
+        "vendor-dir": "vendor",
+        "process-timeout": 400,
+        "cache-dir": ".composer",
+        "cache-files-ttl": 90000
+    },
+    "extra": {
+        "magento-root-dir": "htdocs/",
+        "magento-force": true,
+        "magento-deploystrategy": "symlink",
+        "magento-installer-config": {
+            "target-file": "target.json",
+            "readme": "README.md",
+            "directories": {
+                "config": "configuration",
+                "magento-config": "magento",
+                "file-system-dir": "filesystem",
+                "core-config-data-dir": "core_config_data",
+                "db-dump": "db_dump",
+                "data": "../project-name-data",
+                "db-backup": "../project-name-data/db-dumps",
+                "symlinks": ["media", "var", "sitemap"]
+            },
+            "magento-copy-src": "vendor/magento/magento/",
+            "phpstorm": {
+                "non-excluded-modules": [
+                    "project-name/mage-custom",
+                    "project-name/mage-composer-installer"
+                ]
+            },
+            "archive": {
+                "include": ["htdocs", "composer.lock", "n98-magerun.phar", "postInstallations.magerun", "README.md"]
+            },
+            "archiver": "archiver.sh",
+            "n98-script-file": "postInstallations.magerun",
+            "mage-config-path-version": "project-nameadmintheme/headerbar/version",
+            "release-prefix-branch-name": "release-",
+            "db": {
+                "character-set": "utf8",
+                "collate": "utf8_general_ci"
+            }
+        }
+    },
+    "scripts": {
+        "pre-install-cmd": [
+            "php -f scripts/composer.prebase.php"
+        ],
+        "post-install-cmd": [
+            "ProjectName\\MagentoInstaller\\MageInstall::run",
+            "./scripts/composer.postbase.sh"
+        ],
+        "pre-update-cmd": [
+            "php -f scripts/composer.prebase.php",
+            "ProjectName\\MagentoInstaller\\MageCheck::run"
+        ],
+        "post-update-cmd": [
+            "ProjectName\\MagentoInstaller\\MageUpdate::run",
+            "./scripts/composer.postbase.sh",
+            "./n98-magerun.phar cache:clean",
+            "./n98-magerun.phar cache:flush"
+        ]
+    }
+}

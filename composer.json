@@ -1,0 +1,33 @@
+{
+    "name": "zookal/harris-street",
+    "type": "library",
+    "description": "Composer's plugin handler to install or update Magento after a 'composer install/update'",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Cyrill Schumacher",
+            "email": "FirstName at LastName dot fm"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {
+        "zookal/harris-street-impex":"dev-master",
+        "magento-hackathon/composer-command-integrator": "dev-master"
+    },
+    "require-dev": {
+        "mikey179/vfsStream": "@stable",
+        "composer/composer": "*",
+        "mockery/mockery": "@stable"
+    },
+    "autoload": {
+        "psr-0": {
+            "Zookal\\HarrisStreet": "src/"
+        }
+    },
+    "bin": ["bin/ReplaceSymLink.sh"],
+    "extra": {
+        "composer-command-registry": [
+            "Zookal\\HarrisStreet\\Commands\\CreateReleaseCommand"
+        ]
+    }
+}

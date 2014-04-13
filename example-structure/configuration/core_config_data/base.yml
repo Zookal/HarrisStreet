@@ -1,0 +1,14 @@
+admin/dashboard/enable_charts:
+  default:
+    0: 1
+admin/security/session_cookie_lifetime:
+  default:
+    0: 14400
+admin/security/use_case_sensitive_login:
+  default:
+    0: 1
+admin/url/use_custom_path:
+  default:
+    0: 0
+
+# and tens of thausands more config entries

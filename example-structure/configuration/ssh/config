@@ -1,0 +1,4 @@
+Host stagingserver
+    Hostname ec2-8-8-8-8.ap-southeast-2.compute.amazonaws.com
+    IdentityFile ~/.ssh/cert.pem
+    User ec-user

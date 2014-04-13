@@ -1,0 +1,30 @@
+# URL
+web/unsecure/base_url:
+  default:
+    0: http://staging-project.com/
+web/secure/base_url:
+  default:
+    0: https://staging-project.com/
+web/secure/use_in_frontend:
+  default:
+    0: 1
+web/secure/use_in_adminhtml:
+  default:
+    0: 1
+web/cookie/cookie_domain:
+  default:
+    0: staging-project.com
+
+# DEVELOPER
+dev/template/allow_symlink:
+  default:
+    0: 0
+dev/log/active:
+  default:
+    0: 1
+dev/js/merge_files:
+  default:
+    0: 1
+dev/css/merge_css_files:
+  default:
+    0: 1
