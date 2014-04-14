@@ -1,18 +1,22 @@
-#!env php
 <?php
+/**
+ * @license     http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ * @copyright   2014-present Zookal Pty Ltd, Sydney, Australia
+ * @author      Cyrill at Schumacher dot fm [@SchumacherFM]
+ */
 
 /**
  * this script runs on the production server to unpack the tgz file of the current production version
  */
 class Releaser
 {
-    private $_argv = NULL;
-    protected $_wwwRoot = NULL;
-    protected $_symlinkTarget = NULL;
-    protected $_maintenanceFolder = NULL;
+    private $_argv = null;
+    protected $_wwwRoot = null;
+    protected $_symlinkTarget = null;
+    protected $_maintenanceFolder = null;
     protected $_mageRunCfg = array();
     protected $_tarFileName = '';
-    protected $_version = NULL;
+    protected $_version = null;
 
     public function __construct($argv)
     {
@@ -25,7 +29,7 @@ class Releaser
         $matches = array();
         $re      = '/(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)(?:-(?P<pres>[\da-z\-]+(?:\.[\da-z\-]+)*))?(?:\+(?P<posts>[\da-z\-]+(?:\.[\da-z\-]+)*))?/i';
         if (preg_match($re, $this->_tarFileName, $matches) !== 1 || !isset($matches[0])) {
-            $this->_print("Usage: php {$this->_argv[0]} aPrefix-<semver>.tgz\n", TRUE);
+            $this->_print("Usage: php {$this->_argv[0]} aPrefix-<semver>.tgz\n", true);
         }
         $this->_version = 'v' . str_replace(array('.tar.gz', '.tgz', '.zip'), '', strtolower($matches[0]));
     }
@@ -33,13 +37,13 @@ class Releaser
     protected function _loadComposerJson()
     {
         $jsonFile = $this->_path([$this->_version, 'composer.json']);
-        if (FALSE === file_exists($jsonFile)) {
-            $this->_print($jsonFile . ' file not found!', TRUE);
+        if (false === file_exists($jsonFile)) {
+            $this->_print($jsonFile . ' file not found!', true);
         }
-        $composerConfig = json_decode(file_get_contents($jsonFile), TRUE);
+        $composerConfig = json_decode(file_get_contents($jsonFile), true);
 
         if (!isset($composerConfig['extra']) || !isset($composerConfig['extra']['magento-installer-config'])) {
-            $this->_print($jsonFile . ' is corrupt! Some values are missing!', TRUE);
+            $this->_print($jsonFile . ' is corrupt! Some values are missing!', true);
         }
 
         $this->_mageRunCfg        = array(
@@ -65,7 +69,7 @@ class Releaser
     {
         $this->_initVersion();
 
-        if (FALSE === is_dir($this->_version)) {
+        if (false === is_dir($this->_version)) {
             $this->_runCmd('mkdir ' . $this->_version);
             $this->_runCmd('tar xzf ' . $this->_tarFileName . ' -C ' . $this->_version);
         } else {
@@ -76,12 +80,12 @@ class Releaser
 
         $maintenanceRealTarget = $this->_path([$this->_version, $this->_wwwRoot, $this->_maintenanceFolder]);
         $maintenanceWwwTarget  = $this->_path([$this->_version, $this->_wwwRoot, $this->_maintenanceFolder, $this->_wwwRoot]);
-        if (FALSE === is_dir($maintenanceWwwTarget)) {
-            $this->_print('Maintenance folder did not exists: ' . $maintenanceRealTarget, TRUE);
+        if (false === is_dir($maintenanceWwwTarget)) {
+            $this->_print('Maintenance folder did not exists: ' . $maintenanceRealTarget, true);
         }
 
-        if (FALSE === file_exists($this->_path([$this->_version, $this->_mageRunCfg['script']]))) {
-            $this->_print('Magerun Script not found in location: ' . $this->_version . DIRECTORY_SEPARATOR . $this->_mageRunCfg['script'], TRUE);
+        if (false === file_exists($this->_path([$this->_version, $this->_mageRunCfg['script']]))) {
+            $this->_print('Magerun Script not found in location: ' . $this->_version . DIRECTORY_SEPARATOR . $this->_mageRunCfg['script'], true);
         }
 
         $this->_runCmd('rm -Rf ' . $this->_symlinkTarget);
@@ -90,7 +94,7 @@ class Releaser
         $this->_print('Running backup and environment import via n98-magerun ...');
         $this->_runCmd('cd ' . $this->_version . ' && php n98-magerun.phar script ./' . $this->_mageRunCfg['script']);
 
-        if (TRUE === file_exists($this->_path([$this->_version, $this->_mageRunCfg['flag']]))) {
+        if (true === file_exists($this->_path([$this->_version, $this->_mageRunCfg['flag']]))) {
             $this->_runCmd('rm -Rf ' . $this->_symlinkTarget);
             $this->_runCmd('ln -s ' . $this->_version . ' ' . $this->_symlinkTarget);
             $this->_print('Done!');
@@ -104,10 +108,10 @@ class Releaser
         return implode(DIRECTORY_SEPARATOR, $path);
     }
 
-    protected function _print($str, $die = FALSE)
+    protected function _print($str, $die = false)
     {
         echo $str . PHP_EOL;
-        if (TRUE === $die) {
+        if (true === $die) {
             exit;
         }
     }
