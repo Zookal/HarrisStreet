@@ -1,5 +1,11 @@
 <?php
 /**
+ * @license     http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ * @copyright   2014-present Zookal Pty Ltd, Sydney, Australia
+ * @author      Cyrill at Schumacher dot fm [@SchumacherFM]
+ */
+
+/**
  * creates data folder and its var and media folders
  * moves the magento root folder into the data folder as a backup and then recreates the magento root folder
  *
