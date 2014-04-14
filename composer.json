@@ -24,7 +24,10 @@
             "Zookal\\HarrisStreet": "src/"
         }
     },
-    "bin": ["bin/ReplaceSymLink.sh"],
+    "bin": [
+        "bin/ReplaceSymLink.sh",
+        "bin/composer.prebase.php"
+    ],
     "extra": {
         "composer-command-registry": [
             "Zookal\\HarrisStreet\\Commands\\CreateReleaseCommand"
