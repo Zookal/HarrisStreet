@@ -40,6 +40,7 @@ class MageCheck extends ProjectHandlerAbstract
             'n98-script/success-flag' => static::getConfigValue('n98-script/success-flag'),
             'archive/script-name'     => static::getConfigValue('archive/script-name'),
             'target-file'             => static::getConfigValue('target-file'),
+            'targets'                 => static::getConfigValue('targets'),
             'readme'                  => static::getConfigValue('readme'),
         );
         foreach ($checkValues as $cfg => $file) {

@@ -27,6 +27,7 @@ abstract class ProjectHandlerAbstract
     protected static $localXml = null;
     protected static $composerBinDir = null;
     protected static $currentGitBranchName = null;
+    protected static $releaseGitBranchName = null;
     protected static $releaseVersion = null;
     protected static $isRoot = false;
     protected static $isRelease = false;
@@ -97,20 +98,22 @@ abstract class ProjectHandlerAbstract
     {
         static::checkGitBranchValidSemVer(false);
 
-        $jsonFile = static::$workDir . DIRECTORY_SEPARATOR . static::getConfigValue('target-file');
-        static::fileExists($jsonFile);
+        $targetJsonFile = static::getFilePath(static::$workDir, static::getConfigValue('target-file'));
+        static::fileExists($targetJsonFile);
 
-        static::$environment = json_decode(file_get_contents($jsonFile), true);
+        static::$environment = json_decode(file_get_contents($targetJsonFile), true);
 
         if (!isset(static::$environment['target']) || empty(static::$environment['target'])) {
             throw new \InvalidArgumentException('Invalid Target in ' . static::getConfigValue('target-file'));
         }
         if (true === static::$isRelease) {
-            if ((!isset(static::$environment['branch']) || empty(static::$environment['branch']))) {
-                throw new \Exception('Missing entry "branch" in ' . static::getConfigValue('target-file'));
+            $branchPath                   = 'targets/' . static::$environment['target'] . '/branch';
+            static::$releaseGitBranchName = static::getConfigValue($branchPath);
+            if (true === empty(static::$releaseGitBranchName)) {
+                throw new \Exception('Missing entry "branch" in config path: ' . $branchPath);
             }
-            if (false === static::isLocalGitBranchAvailable(static::$environment['branch'])) {
-                throw new \Exception('The local branch ' . static::$environment['branch'] . ' did not exists! Please create it!');
+            if (false === static::isLocalGitBranchAvailable(static::$releaseGitBranchName)) {
+                throw new \Exception('The local branch ' . static::$releaseGitBranchName . ' does not exists! Please create it!');
             }
         }
     }
@@ -810,7 +813,7 @@ abstract class ProjectHandlerAbstract
             'git add --all .',
             'git commit -a -m \'Creating Release ' . static::$releaseVersion . '\'',
             'git archive --format=tar -o ' . $tmpArchiveName . ' HEAD',
-            'git checkout ' . static::$environment['branch'],
+            'git checkout ' . static::$releaseGitBranchName,
             'chmod 000 .git',
             'rm -Rf ' . static::$magentoRootDir,
             'tar xf ' . $tmpArchiveName,
