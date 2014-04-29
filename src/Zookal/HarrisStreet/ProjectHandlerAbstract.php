@@ -738,7 +738,12 @@ abstract class ProjectHandlerAbstract
         $configurator = new PhpStormConfigurator();
         $configurator->setRootDir(static::$magentoRootDir);
         $configurator->setVendorDir(static::$vendorDir);
-        $configurator->setConfig(isset(static::$magentoInstallerConfig['phpstorm']) ? static::$magentoInstallerConfig['phpstorm'] : array());
+        $config = isset(static::$magentoInstallerConfig['phpstorm']) ? static::$magentoInstallerConfig['phpstorm'] : array();
+
+        if (isset(static::$target['phpstorm']) && is_array(static::$target['phpstorm']) && count(static::$target['phpstorm']) > 0) {
+            $config = array_merge_recursive($config, static::$target['phpstorm']);
+        }
+        $configurator->setConfig($config);
 
         $result  = array();
         $result1 = $configurator->addGitRoots();
