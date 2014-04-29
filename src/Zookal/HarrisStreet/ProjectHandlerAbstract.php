@@ -1058,4 +1058,27 @@ git push --tags
             static::executeCommand('ln -s ../' . $from . ' ' . $to, true);
         }
     }
+
+    /**
+     * removes unneeded magento modules
+     *
+     * @return mixed
+     */
+    protected static function removeModules()
+    {
+        $mrm = new ModuleRemover(static::$io);
+
+        $buildTarget = isset(static::$target['build-target']) ? trim(static::$target['build-target']) : '';
+        if (true === empty($buildTarget)) {
+            return static::$io->write('<info>build-target not defined. Cannot remove any modules.</info>');
+        }
+
+        $modules = static::getConfigValue('targets/remove-modules/' . $buildTarget);
+        if (true === empty($modules)) {
+            return static::$io->write('<info>build-target is defined but remove-modules node is empty. Cannot remove any modules.</info>');
+        }
+        foreach ($modules as $module) {
+            $mrm->remove(static::$magentoRootDir, $module);
+        }
+    }
 }

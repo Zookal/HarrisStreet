@@ -57,6 +57,8 @@ class MageInstall extends ProjectHandlerAbstract
         static::handlePersistentDirectories();
         static::importCoreConfigData();
 
+        static::removeModules();
+
         if (false === static::$isRelease) {
             static::updatePhpStorm();
         }
