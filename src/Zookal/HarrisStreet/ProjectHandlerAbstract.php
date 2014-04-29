@@ -123,12 +123,21 @@ abstract class ProjectHandlerAbstract
      */
     protected static function loadDbConfig()
     {
+        /**
+         * load a developers custom local.xml file if he/she specifies it in the target.json file
+         * but only if we are not building a release
+         */
+        if (false === static::$isRelease && isset(static::$target['local.xml']) && true === is_file(static::$target['local.xml'])) {
+            static::$localXml = static::$target['local.xml'];
+            static::$io->write('<comment>Loading custom local.xml: ' . static::$localXml . '</comment>', true);
+        } else {
+            static::$localXml = static::getFilePath(array(
+                self::getConfigValue('directories/config-mage-xml'),
+                static::$target['target'],
+                'local.xml'
+            ));
+        }
 
-        static::$localXml = static::getFilePath(array(
-            self::getConfigValue('directories/config-mage-xml'),
-            static::$target['target'],
-            'local.xml'
-        ));
         static::fileExists(static::$localXml);
 
         if (true === static::$isRelease) {
