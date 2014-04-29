@@ -22,7 +22,7 @@ abstract class ProjectHandlerAbstract
     protected static $magentoInstallerConfig = array();
     protected static $magentoRootDir = null;
     protected static $vendorDir = null;
-    protected static $environment = null;
+    protected static $target = null;
     protected static $dbConfig = array();
     protected static $localXml = null;
     protected static $composerBinDir = null;
@@ -101,13 +101,13 @@ abstract class ProjectHandlerAbstract
         $targetJsonFile = static::getFilePath(static::$workDir, static::getConfigValue('target-file'));
         static::fileExists($targetJsonFile);
 
-        static::$environment = json_decode(file_get_contents($targetJsonFile), true);
+        static::$target = json_decode(file_get_contents($targetJsonFile), true);
 
-        if (!isset(static::$environment['target']) || empty(static::$environment['target'])) {
+        if (!isset(static::$target['target']) || empty(static::$target['target'])) {
             throw new \InvalidArgumentException('Invalid Target in ' . static::getConfigValue('target-file'));
         }
         if (true === static::$isRelease) {
-            $branchPath                   = 'targets/' . static::$environment['target'] . '/branch';
+            $branchPath                   = 'targets/' . static::$target['target'] . '/branch';
             static::$releaseGitBranchName = static::getConfigValue($branchPath);
             if (true === empty(static::$releaseGitBranchName)) {
                 throw new \Exception('Missing entry "branch" in config path: ' . $branchPath);
@@ -126,7 +126,7 @@ abstract class ProjectHandlerAbstract
 
         static::$localXml = static::getFilePath(array(
             self::getConfigValue('directories/config-mage-xml'),
-            static::$environment['target'],
+            static::$target['target'],
             'local.xml'
         ));
         static::fileExists(static::$localXml);
@@ -303,19 +303,19 @@ abstract class ProjectHandlerAbstract
         $files = array(
             array(
                 'from' => array('..', '..', '..', static::getConfigValue('directories/config-mage-xml'),
-                    static::$environment['target'], 'local.xml'
+                    static::$target['target'], 'local.xml'
                 ),
                 'to'   => array(static::$magentoRootDir, 'app', 'etc', 'local.xml'),
             ),
             array(
                 'from' => array('..', '..', '..', static::getConfigValue('directories/config-mage-xml'),
-                    static::$environment['target'], 'local.xml.phpunit'
+                    static::$target['target'], 'local.xml.phpunit'
                 ),
                 'to'   => array(static::$magentoRootDir, 'app', 'etc', 'local.xml.phpunit'),
             ),
             array(
                 'from' => array('..', '..', static::getConfigValue('directories/config-mage-xml'),
-                    static::$environment['target'], 'errors', 'local.xml'
+                    static::$target['target'], 'errors', 'local.xml'
                 ),
                 'to'   => array(static::$magentoRootDir, 'errors', 'local.xml'),
             ),
@@ -340,7 +340,7 @@ abstract class ProjectHandlerAbstract
 
         $parametersFile = static::getFilePath(array(
             static::getConfigValue('directories/config-file-system'),
-            static::$environment['target'] . '.yml'
+            static::$target['target'] . '.yml'
         ));
         static::fileExists($parametersFile);
         $parameters = Yaml::parse($parametersFile);
@@ -422,7 +422,7 @@ abstract class ProjectHandlerAbstract
 
         $parametersFile = static::getFilePath(array(
             static::getConfigValue('directories/config-mage-xml'),
-            static::$environment['target'],
+            static::$target['target'],
             'install.yml'
         ));
         static::fileExists($parametersFile);
@@ -569,7 +569,7 @@ abstract class ProjectHandlerAbstract
         ));
         $envConfig  = static::getFilePath(array(
             static::getConfigValue('directories/config-mage-core'),
-            static::$environment['target'] . '.yml'
+            static::$target['target'] . '.yml'
         ));
         static::fileExists($baseConfig);
         static::fileExists($envConfig);
@@ -862,8 +862,8 @@ git push --tags
 ',
         );
 
-        static::$io->write('<info>' . (isset($hints[static::$environment['target']])
-                ? $hints[static::$environment['target']]
+        static::$io->write('<info>' . (isset($hints[static::$target['target']])
+                ? $hints[static::$target['target']]
                 : 'Wow no hint found!')
             . '</info>', true);
     }
@@ -916,7 +916,7 @@ git push --tags
             ? $includeFolders
             : '.';
 
-        $targetTarBall = static::getConfigValue('directories/data') . DIRECTORY_SEPARATOR . static::$environment['target'] . '-' . static::$releaseVersion . '.tgz';
+        $targetTarBall = static::getConfigValue('directories/data') . DIRECTORY_SEPARATOR . static::$target['target'] . '-' . static::$releaseVersion . '.tgz';
 
         $content = "#!/bin/bash\n" . 'tar -zcf ' . $targetTarBall . ' ' . implode(' ', $tarIncludeFolders) . "\n";
 

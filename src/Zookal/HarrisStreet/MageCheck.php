@@ -30,7 +30,7 @@ class MageCheck extends ProjectHandlerAbstract
         if (!file_exists(static::$magentoRootDir) || !is_dir(static::$magentoRootDir)) {
             throw new Exceptions\DirectoryNotFound(static::$magentoRootDir);
         }
-        $magentoConfigDir = static::getConfigValue('directories/config-mage-xml') . DIRECTORY_SEPARATOR . static::$environment['target'];
+        $magentoConfigDir = static::getConfigValue('directories/config-mage-xml') . DIRECTORY_SEPARATOR . static::$target['target'];
         if (!is_dir($magentoConfigDir)) {
             throw new Exceptions\DirectoryNotFound($magentoConfigDir);
         }
