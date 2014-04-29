@@ -17,6 +17,7 @@ abstract class ProjectHandlerAbstract
 {
     const N98_MAGRRUN_CMD = 'php n98-magerun.phar '; // @todo move into composer.json
     const COMPOSER_JSON = 'composer.json';
+    const LOCAL_XML     = 'local.xml';
     protected static $mysqlPdoWrapper = null;
     protected static $workDir = null;
     protected static $magentoInstallerConfig = array();
@@ -119,32 +120,37 @@ abstract class ProjectHandlerAbstract
     }
 
     /**
+     * load a developers custom local.xml file if he/she specifies it in the target.json file
+     * but only if we are not building a release
+     * @return string
+     */
+    protected static function getLocalXmlFilePath()
+    {
+        if (false === static::$isRelease && isset(static::$target[static::LOCAL_XML]) && true === is_file(static::$target[static::LOCAL_XML])) {
+            $localXml = static::$target[static::LOCAL_XML];
+            static::$io->write('<comment>Loading custom ' . static::LOCAL_XML . ': ' . $localXml . '</comment>', true);
+        } else {
+            $localXml = static::getFilePath(array(self::getConfigValue('directories/config-mage-xml'), static::$target['target'], static::LOCAL_XML));
+        }
+        static::fileExists($localXml);
+        return $localXml;
+    }
+
+    /**
      * @return bool
      */
     protected static function loadDbConfig()
     {
+        $localXml = static::getLocalXmlFilePath();
+
         /**
-         * load a developers custom local.xml file if he/she specifies it in the target.json file
-         * but only if we are not building a release
+         * stop loading when we are building a release
          */
-        if (false === static::$isRelease && isset(static::$target['local.xml']) && true === is_file(static::$target['local.xml'])) {
-            static::$localXml = static::$target['local.xml'];
-            static::$io->write('<comment>Loading custom local.xml: ' . static::$localXml . '</comment>', true);
-        } else {
-            static::$localXml = static::getFilePath(array(
-                self::getConfigValue('directories/config-mage-xml'),
-                static::$target['target'],
-                'local.xml'
-            ));
-        }
-
-        static::fileExists(static::$localXml);
-
         if (true === static::$isRelease) {
             return true;
         }
 
-        static::$localXml = simplexml_load_file(static::$localXml);
+        static::$localXml = simplexml_load_file($localXml);
 
         $persistedData = static::getPersistedUserData(); // loading mysql root access data
         if (false !== $persistedData) {
@@ -175,7 +181,7 @@ abstract class ProjectHandlerAbstract
      */
     protected static function fileExists($file)
     {
-        if (!file_exists($file)) {
+        if (false === file_exists($file)) {
             throw new Exceptions\FileNotFound($file);
         }
         return true;
@@ -309,24 +315,21 @@ abstract class ProjectHandlerAbstract
      */
     protected static function linkLocalXmlFiles()
     {
-        $files = array(
+        $localXml = static::getLocalXmlFilePath();
+        $files    = array(
             array(
-                'from' => array('..', '..', '..', static::getConfigValue('directories/config-mage-xml'),
-                    static::$target['target'], 'local.xml'
-                ),
-                'to'   => array(static::$magentoRootDir, 'app', 'etc', 'local.xml'),
+                'from' => array('..', '..', '..', $localXml),
+                'to'   => array(static::$magentoRootDir, 'app', 'etc', static::LOCAL_XML),
             ),
             array(
-                'from' => array('..', '..', '..', static::getConfigValue('directories/config-mage-xml'),
-                    static::$target['target'], 'local.xml.phpunit'
+                'from' => array('..', '..', '..', static::getConfigValue('directories/config-mage-xml'), static::$target['target'],
+                    static::LOCAL_XML . '.phpunit'
                 ),
-                'to'   => array(static::$magentoRootDir, 'app', 'etc', 'local.xml.phpunit'),
+                'to'   => array(static::$magentoRootDir, 'app', 'etc', static::LOCAL_XML . '.phpunit'),
             ),
             array(
-                'from' => array('..', '..', static::getConfigValue('directories/config-mage-xml'),
-                    static::$target['target'], 'errors', 'local.xml'
-                ),
-                'to'   => array(static::$magentoRootDir, 'errors', 'local.xml'),
+                'from' => array('..', '..', static::getConfigValue('directories/config-mage-xml'), static::$target['target'], 'errors', static::LOCAL_XML),
+                'to'   => array(static::$magentoRootDir, 'errors', static::LOCAL_XML),
             ),
         );
 
@@ -423,10 +426,10 @@ abstract class ProjectHandlerAbstract
         static::$io->write('<comment>Running Magento install: php -f install.php</comment>', true);
 
         // move local.xml file
-        $oldLocalXml = static::getFilePath(array(static::$magentoRootDir, 'app', 'etc', 'local.xml'));
+        $oldLocalXml = static::getFilePath(array(static::$magentoRootDir, 'app', 'etc', static::LOCAL_XML));
         if (file_exists($oldLocalXml)) {
             @rename($oldLocalXml, $oldLocalXml . '.' . date('Y-m-d-H-i-s'));
-            static::$io->write('<comment>Moved old local.xml to a new file name.</comment>', true);
+            static::$io->write('<comment>Moved old ' . static::LOCAL_XML . ' to a new file name.</comment>', true);
         }
 
         $parametersFile = static::getFilePath(array(
@@ -504,7 +507,7 @@ abstract class ProjectHandlerAbstract
     protected static function getPersistedUserData()
     {
         if (empty(static::$localXml) || !(static::$localXml->gobal instanceof \SimpleXMLElement)) {
-            throw new \Exception('local.xml not loaded!');
+            throw new \Exception(static::LOCAL_XML.' not loaded!');
         }
         $cfg = static::getCryptConfig();
 
