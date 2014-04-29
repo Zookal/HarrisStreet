@@ -507,7 +507,7 @@ abstract class ProjectHandlerAbstract
     protected static function getPersistedUserData()
     {
         if (empty(static::$localXml) || !(static::$localXml->gobal instanceof \SimpleXMLElement)) {
-            throw new \Exception(static::LOCAL_XML.' not loaded!');
+            throw new \Exception(static::LOCAL_XML . ' not loaded!');
         }
         $cfg = static::getCryptConfig();
 
@@ -683,10 +683,17 @@ abstract class ProjectHandlerAbstract
     }
 
     /**
+     * can be disabled when setting key database-backup to false in target.json
+     *
      * @return bool
      */
     protected static function backupDataBase()
     {
+        if (isset(static::$target['database-backup']) && false === static::$target['database-backup']) {
+            static::$io->write('<info>DB Backup disabled!</info>', true);
+            return false;
+        }
+
         $dbBackUpDir = static::getConfigValue('directories/db-backup');
         if (false === static::$isRelease && (empty($dbBackUpDir) || !is_dir($dbBackUpDir))) {
             static::$io->write('<warning>DB Backup failed! Directory not found.</warning>', true);
