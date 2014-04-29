@@ -1066,7 +1066,7 @@ git push --tags
      */
     protected static function removeModules()
     {
-        $mrm = new ModuleRemover(static::$io);
+        $mrm = new ModuleRemover(static::$magentoRootDir, static::$io);
 
         $buildTarget = isset(static::$target['build-target']) ? trim(static::$target['build-target']) : '';
         if (true === empty($buildTarget)) {
@@ -1075,10 +1075,10 @@ git push --tags
 
         $modules = static::getConfigValue('targets/remove-modules/' . $buildTarget);
         if (true === empty($modules)) {
-            return static::$io->write('<info>build-target is defined but remove-modules node is empty. Cannot remove any modules.</info>');
+            return static::$io->write('<info>build-target is defined but remove-modules node is empty. No modules have been removed.</info>');
         }
         foreach ($modules as $module) {
-            $mrm->remove(static::$magentoRootDir, $module);
+            $mrm->remove($module);
         }
     }
 }
