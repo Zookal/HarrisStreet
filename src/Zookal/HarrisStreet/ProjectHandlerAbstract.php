@@ -346,25 +346,28 @@ abstract class ProjectHandlerAbstract
 
     /**
      * @return bool
+     * @throws \InvalidArgumentException
      */
     protected static function handleFileSystem()
     {
+        $parameters = static::getConfigValue('targets/' . static::$target['target'] . '/file-system');
 
-        $parametersFile = static::getFilePath(array(
-            static::getConfigValue('directories/config-file-system'),
-            static::$target['target'] . '.yml'
-        ));
-        static::fileExists($parametersFile);
-        $parameters = Yaml::parse($parametersFile);
+        if (isset(static::$target['file-system']) && is_array(static::$target['file-system'])) {
+            $parameters = array_merge_recursive($parameters, static::$target['file-system']);
+        }
 
-        if ($parameters['magento-deploystrategy'] === 'copy') {
+        if (false === is_array($parameters) || count($parameters) === 0) {
+            throw new \InvalidArgumentException('Config path ' . 'targets/' . static::$target['target'] . '/file-system' . ' cannot be empty!');
+        }
+
+        if ('copy' === $parameters['magento-deploystrategy']) {
             static::$io->write('<info>Replacing symlinks with file/directory ...</info>', true);
             $cmd = 'find ' . static::$magentoRootDir . ' -type l -exec ' . static::$composerBinDir . '/ReplaceSymLink.sh {} \;';
             static::executeCommand($cmd, true);
         }
 
-        $chmodF = (int)$parameters['chmod-file'];
-        $chmodD = (int)$parameters['chmod-dir'];
+        $chmodF = isset($parameters['chmod-file']) ? (int)$parameters['chmod-file'] : 644;
+        $chmodD = isset($parameters['chmod-dir']) ? (int)$parameters['chmod-dir'] : 755;
         static::executeCommand('find ' . static::$magentoRootDir . ' -type d -exec chmod ' . $chmodD . ' {} \;', true);
         static::executeCommand('find ' . static::$magentoRootDir . ' -type f -exec chmod ' . $chmodF . ' {} \;', true);
 
@@ -392,28 +395,11 @@ abstract class ProjectHandlerAbstract
             $cmd = sprintf('chown -R %s:%s %s',
                 $parameters['user'],
                 $parameters['group'],
-                '.' // static::$magentoRootDir
+                '*' // static::$magentoRootDir
             );
             static::executeCommand($cmd, true);
         }
 
-        if (trim($parameters['webserver-user']) === 'ask') {
-            $parameters['webserver-user'] = static::$io->ask('Webserver user name:', '');
-        }
-
-        if (!empty($parameters['webserver-user'])) {
-
-            // @todo bug because these two folders are now symlinks
-            $directories = array('var', 'media');
-            foreach ($directories as $dir) {
-                $cmd = sprintf('chown -R %s %s/%s',
-                    $parameters['webserver-user'],
-                    static::$magentoRootDir,
-                    $dir
-                );
-                static::executeCommand($cmd, true);
-            }
-        }
         return true;
     }
 
