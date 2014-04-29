@@ -99,7 +99,7 @@ abstract class ProjectHandlerAbstract
     {
         static::checkGitBranchValidSemVer(false);
 
-        $targetJsonFile = static::getFilePath(static::$workDir, static::getConfigValue('target-file'));
+        $targetJsonFile = static::getFilePath(array(static::$workDir, static::getConfigValue('target-file')));
         static::fileExists($targetJsonFile);
 
         static::$target = json_decode(file_get_contents($targetJsonFile), true);
