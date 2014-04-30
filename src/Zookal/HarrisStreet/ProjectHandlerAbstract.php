@@ -50,7 +50,6 @@ abstract class ProjectHandlerAbstract
         static::$io = $event->getIO();
         $options    = $event->getComposer()->getPackage()->getExtra();
 
-        // @todo that could be maybe buggy in certain ...
         static::$workDir                = rtrim(isset($_SERVER['PWD']) ? $_SERVER['PWD'] : trim(shell_exec('pwd')), '/');
         static::$magentoRootDir         = rtrim(isset($options['magento-root-dir']) ? $options['magento-root-dir'] : '', '/');
         static::$magentoInstallerConfig = $options['magento-installer-config'];
@@ -132,6 +131,7 @@ abstract class ProjectHandlerAbstract
         } else {
             $localXml = static::getFilePath(array(self::getConfigValue('directories/config-mage-xml'), static::$target['target'], static::LOCAL_XML));
         }
+        $localXml = realpath($localXml);
         static::fileExists($localXml);
         return $localXml;
     }
@@ -318,7 +318,7 @@ abstract class ProjectHandlerAbstract
         $localXml = static::getLocalXmlFilePath();
         $files    = array(
             array(
-                'from' => array('..', '..', '..', $localXml),
+                'from' => array($localXml),
                 'to'   => array(static::$magentoRootDir, 'app', 'etc', static::LOCAL_XML),
             ),
             array(
