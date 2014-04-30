@@ -30,7 +30,7 @@ class MageCheck extends ProjectHandlerAbstract
         if (!file_exists(static::$magentoRootDir) || !is_dir(static::$magentoRootDir)) {
             throw new Exceptions\DirectoryNotFound(static::$magentoRootDir);
         }
-        $magentoConfigDir = static::getConfigValue('directories/config-mage-xml') . DIRECTORY_SEPARATOR . static::$environment['target'];
+        $magentoConfigDir = static::getConfigValue('directories/config-mage-xml') . DIRECTORY_SEPARATOR . static::$target['target'];
         if (!is_dir($magentoConfigDir)) {
             throw new Exceptions\DirectoryNotFound($magentoConfigDir);
         }
@@ -40,6 +40,7 @@ class MageCheck extends ProjectHandlerAbstract
             'n98-script/success-flag' => static::getConfigValue('n98-script/success-flag'),
             'archive/script-name'     => static::getConfigValue('archive/script-name'),
             'target-file'             => static::getConfigValue('target-file'),
+            'targets'                 => static::getConfigValue('targets'),
             'readme'                  => static::getConfigValue('readme'),
         );
         foreach ($checkValues as $cfg => $file) {

@@ -17,16 +17,18 @@ abstract class ProjectHandlerAbstract
 {
     const N98_MAGRRUN_CMD = 'php n98-magerun.phar '; // @todo move into composer.json
     const COMPOSER_JSON = 'composer.json';
+    const LOCAL_XML     = 'local.xml';
     protected static $mysqlPdoWrapper = null;
     protected static $workDir = null;
     protected static $magentoInstallerConfig = array();
     protected static $magentoRootDir = null;
     protected static $vendorDir = null;
-    protected static $environment = null;
+    protected static $target = null;
     protected static $dbConfig = array();
     protected static $localXml = null;
     protected static $composerBinDir = null;
     protected static $currentGitBranchName = null;
+    protected static $releaseGitBranchName = null;
     protected static $releaseVersion = null;
     protected static $isRoot = false;
     protected static $isRelease = false;
@@ -48,7 +50,6 @@ abstract class ProjectHandlerAbstract
         static::$io = $event->getIO();
         $options    = $event->getComposer()->getPackage()->getExtra();
 
-        // @todo that could be maybe buggy in certain ...
         static::$workDir                = rtrim(isset($_SERVER['PWD']) ? $_SERVER['PWD'] : trim(shell_exec('pwd')), '/');
         static::$magentoRootDir         = rtrim(isset($options['magento-root-dir']) ? $options['magento-root-dir'] : '', '/');
         static::$magentoInstallerConfig = $options['magento-installer-config'];
@@ -97,22 +98,42 @@ abstract class ProjectHandlerAbstract
     {
         static::checkGitBranchValidSemVer(false);
 
-        $jsonFile = static::$workDir . DIRECTORY_SEPARATOR . static::getConfigValue('target-file');
-        static::fileExists($jsonFile);
+        $targetJsonFile = static::getFilePath(array(static::$workDir, static::getConfigValue('target-file')));
+        static::fileExists($targetJsonFile);
 
-        static::$environment = json_decode(file_get_contents($jsonFile), true);
+        static::$target = json_decode(file_get_contents($targetJsonFile), true);
 
-        if (!isset(static::$environment['target']) || empty(static::$environment['target'])) {
+        if (!isset(static::$target['target']) || empty(static::$target['target'])) {
             throw new \InvalidArgumentException('Invalid Target in ' . static::getConfigValue('target-file'));
         }
         if (true === static::$isRelease) {
-            if ((!isset(static::$environment['branch']) || empty(static::$environment['branch']))) {
-                throw new \Exception('Missing entry "branch" in ' . static::getConfigValue('target-file'));
+            $branchPath                   = 'targets/' . static::$target['target'] . '/branch';
+            static::$releaseGitBranchName = static::getConfigValue($branchPath);
+            if (true === empty(static::$releaseGitBranchName)) {
+                throw new \Exception('Missing entry "branch" in config path: ' . $branchPath);
             }
-            if (false === static::isLocalGitBranchAvailable(static::$environment['branch'])) {
-                throw new \Exception('The local branch ' . static::$environment['branch'] . ' did not exists! Please create it!');
+            if (false === static::isLocalGitBranchAvailable(static::$releaseGitBranchName)) {
+                throw new \Exception('The local branch ' . static::$releaseGitBranchName . ' does not exists! Please create it!');
             }
         }
+    }
+
+    /**
+     * load a developers custom local.xml file if he/she specifies it in the target.json file
+     * but only if we are not building a release
+     * @return string
+     */
+    protected static function getLocalXmlFilePath()
+    {
+        if (false === static::$isRelease && isset(static::$target[static::LOCAL_XML]) && true === is_file(static::$target[static::LOCAL_XML])) {
+            $localXml = static::$target[static::LOCAL_XML];
+            static::$io->write('<comment>Loading custom ' . static::LOCAL_XML . ': ' . $localXml . '</comment>', true);
+        } else {
+            $localXml = static::getFilePath(array(self::getConfigValue('directories/config-mage-xml'), static::$target['target'], static::LOCAL_XML));
+        }
+        $localXml = realpath($localXml);
+        static::fileExists($localXml);
+        return $localXml;
     }
 
     /**
@@ -120,19 +141,16 @@ abstract class ProjectHandlerAbstract
      */
     protected static function loadDbConfig()
     {
+        $localXml = static::getLocalXmlFilePath();
 
-        static::$localXml = static::getFilePath(array(
-            self::getConfigValue('directories/config-mage-xml'),
-            static::$environment['target'],
-            'local.xml'
-        ));
-        static::fileExists(static::$localXml);
-
+        /**
+         * stop loading when we are building a release
+         */
         if (true === static::$isRelease) {
             return true;
         }
 
-        static::$localXml = simplexml_load_file(static::$localXml);
+        static::$localXml = simplexml_load_file($localXml);
 
         $persistedData = static::getPersistedUserData(); // loading mysql root access data
         if (false !== $persistedData) {
@@ -163,7 +181,7 @@ abstract class ProjectHandlerAbstract
      */
     protected static function fileExists($file)
     {
-        if (!file_exists($file)) {
+        if (false === file_exists($file)) {
             throw new Exceptions\FileNotFound($file);
         }
         return true;
@@ -297,24 +315,21 @@ abstract class ProjectHandlerAbstract
      */
     protected static function linkLocalXmlFiles()
     {
-        $files = array(
+        $localXml = static::getLocalXmlFilePath();
+        $files    = array(
             array(
-                'from' => array('..', '..', '..', static::getConfigValue('directories/config-mage-xml'),
-                    static::$environment['target'], 'local.xml'
-                ),
-                'to'   => array(static::$magentoRootDir, 'app', 'etc', 'local.xml'),
+                'from' => array($localXml),
+                'to'   => array(static::$magentoRootDir, 'app', 'etc', static::LOCAL_XML),
             ),
             array(
-                'from' => array('..', '..', '..', static::getConfigValue('directories/config-mage-xml'),
-                    static::$environment['target'], 'local.xml.phpunit'
+                'from' => array('..', '..', '..', static::getConfigValue('directories/config-mage-xml'), static::$target['target'],
+                    static::LOCAL_XML . '.phpunit'
                 ),
-                'to'   => array(static::$magentoRootDir, 'app', 'etc', 'local.xml.phpunit'),
+                'to'   => array(static::$magentoRootDir, 'app', 'etc', static::LOCAL_XML . '.phpunit'),
             ),
             array(
-                'from' => array('..', '..', static::getConfigValue('directories/config-mage-xml'),
-                    static::$environment['target'], 'errors', 'local.xml'
-                ),
-                'to'   => array(static::$magentoRootDir, 'errors', 'local.xml'),
+                'from' => array('..', '..', static::getConfigValue('directories/config-mage-xml'), static::$target['target'], 'errors', static::LOCAL_XML),
+                'to'   => array(static::$magentoRootDir, 'errors', static::LOCAL_XML),
             ),
         );
 
@@ -331,25 +346,28 @@ abstract class ProjectHandlerAbstract
 
     /**
      * @return bool
+     * @throws \InvalidArgumentException
      */
     protected static function handleFileSystem()
     {
+        $parameters = static::getConfigValue('targets/' . static::$target['target'] . '/file-system');
 
-        $parametersFile = static::getFilePath(array(
-            static::getConfigValue('directories/config-file-system'),
-            static::$environment['target'] . '.yml'
-        ));
-        static::fileExists($parametersFile);
-        $parameters = Yaml::parse($parametersFile);
+        if (isset(static::$target['file-system']) && is_array(static::$target['file-system'])) {
+            $parameters = array_merge_recursive($parameters, static::$target['file-system']);
+        }
 
-        if ($parameters['magento-deploystrategy'] === 'copy') {
+        if (false === is_array($parameters) || count($parameters) === 0) {
+            throw new \InvalidArgumentException('Config path ' . 'targets/' . static::$target['target'] . '/file-system' . ' cannot be empty!');
+        }
+
+        if ('copy' === $parameters['magento-deploystrategy']) {
             static::$io->write('<info>Replacing symlinks with file/directory ...</info>', true);
             $cmd = 'find ' . static::$magentoRootDir . ' -type l -exec ' . static::$composerBinDir . '/ReplaceSymLink.sh {} \;';
             static::executeCommand($cmd, true);
         }
 
-        $chmodF = (int)$parameters['chmod-file'];
-        $chmodD = (int)$parameters['chmod-dir'];
+        $chmodF = isset($parameters['chmod-file']) ? (int)$parameters['chmod-file'] : 644;
+        $chmodD = isset($parameters['chmod-dir']) ? (int)$parameters['chmod-dir'] : 755;
         static::executeCommand('find ' . static::$magentoRootDir . ' -type d -exec chmod ' . $chmodD . ' {} \;', true);
         static::executeCommand('find ' . static::$magentoRootDir . ' -type f -exec chmod ' . $chmodF . ' {} \;', true);
 
@@ -377,28 +395,11 @@ abstract class ProjectHandlerAbstract
             $cmd = sprintf('chown -R %s:%s %s',
                 $parameters['user'],
                 $parameters['group'],
-                '.' // static::$magentoRootDir
+                '*' // static::$magentoRootDir
             );
             static::executeCommand($cmd, true);
         }
 
-        if (trim($parameters['webserver-user']) === 'ask') {
-            $parameters['webserver-user'] = static::$io->ask('Webserver user name:', '');
-        }
-
-        if (!empty($parameters['webserver-user'])) {
-
-            // @todo bug because these two folders are now symlinks
-            $directories = array('var', 'media');
-            foreach ($directories as $dir) {
-                $cmd = sprintf('chown -R %s %s/%s',
-                    $parameters['webserver-user'],
-                    static::$magentoRootDir,
-                    $dir
-                );
-                static::executeCommand($cmd, true);
-            }
-        }
         return true;
     }
 
@@ -411,15 +412,15 @@ abstract class ProjectHandlerAbstract
         static::$io->write('<comment>Running Magento install: php -f install.php</comment>', true);
 
         // move local.xml file
-        $oldLocalXml = static::getFilePath(array(static::$magentoRootDir, 'app', 'etc', 'local.xml'));
+        $oldLocalXml = static::getFilePath(array(static::$magentoRootDir, 'app', 'etc', static::LOCAL_XML));
         if (file_exists($oldLocalXml)) {
             @rename($oldLocalXml, $oldLocalXml . '.' . date('Y-m-d-H-i-s'));
-            static::$io->write('<comment>Moved old local.xml to a new file name.</comment>', true);
+            static::$io->write('<comment>Moved old ' . static::LOCAL_XML . ' to a new file name.</comment>', true);
         }
 
         $parametersFile = static::getFilePath(array(
             static::getConfigValue('directories/config-mage-xml'),
-            static::$environment['target'],
+            static::$target['target'],
             'install.yml'
         ));
         static::fileExists($parametersFile);
@@ -492,7 +493,7 @@ abstract class ProjectHandlerAbstract
     protected static function getPersistedUserData()
     {
         if (empty(static::$localXml) || !(static::$localXml->gobal instanceof \SimpleXMLElement)) {
-            throw new \Exception('local.xml not loaded!');
+            throw new \Exception(static::LOCAL_XML . ' not loaded!');
         }
         $cfg = static::getCryptConfig();
 
@@ -566,7 +567,7 @@ abstract class ProjectHandlerAbstract
         ));
         $envConfig  = static::getFilePath(array(
             static::getConfigValue('directories/config-mage-core'),
-            static::$environment['target'] . '.yml'
+            static::$target['target'] . '.yml'
         ));
         static::fileExists($baseConfig);
         static::fileExists($envConfig);
@@ -668,10 +669,17 @@ abstract class ProjectHandlerAbstract
     }
 
     /**
+     * can be disabled when setting key database-backup to false in target.json
+     *
      * @return bool
      */
     protected static function backupDataBase()
     {
+        if (isset(static::$target['database-backup']) && false === static::$target['database-backup']) {
+            static::$io->write('<info>DB Backup disabled!</info>', true);
+            return false;
+        }
+
         $dbBackUpDir = static::getConfigValue('directories/db-backup');
         if (false === static::$isRelease && (empty($dbBackUpDir) || !is_dir($dbBackUpDir))) {
             static::$io->write('<warning>DB Backup failed! Directory not found.</warning>', true);
@@ -735,7 +743,12 @@ abstract class ProjectHandlerAbstract
         $configurator = new PhpStormConfigurator();
         $configurator->setRootDir(static::$magentoRootDir);
         $configurator->setVendorDir(static::$vendorDir);
-        $configurator->setConfig(isset(static::$magentoInstallerConfig['phpstorm']) ? static::$magentoInstallerConfig['phpstorm'] : array());
+        $config = isset(static::$magentoInstallerConfig['phpstorm']) ? static::$magentoInstallerConfig['phpstorm'] : array();
+
+        if (isset(static::$target['phpstorm']) && is_array(static::$target['phpstorm']) && count(static::$target['phpstorm']) > 0) {
+            $config = array_merge_recursive($config, static::$target['phpstorm']);
+        }
+        $configurator->setConfig($config);
 
         $result  = array();
         $result1 = $configurator->addGitRoots();
@@ -810,7 +823,7 @@ abstract class ProjectHandlerAbstract
             'git add --all .',
             'git commit -a -m \'Creating Release ' . static::$releaseVersion . '\'',
             'git archive --format=tar -o ' . $tmpArchiveName . ' HEAD',
-            'git checkout ' . static::$environment['branch'],
+            'git checkout ' . static::$releaseGitBranchName,
             'chmod 000 .git',
             'rm -Rf ' . static::$magentoRootDir,
             'tar xf ' . $tmpArchiveName,
@@ -859,8 +872,8 @@ git push --tags
 ',
         );
 
-        static::$io->write('<info>' . (isset($hints[static::$environment['target']])
-                ? $hints[static::$environment['target']]
+        static::$io->write('<info>' . (isset($hints[static::$target['target']])
+                ? $hints[static::$target['target']]
                 : 'Wow no hint found!')
             . '</info>', true);
     }
@@ -913,7 +926,7 @@ git push --tags
             ? $includeFolders
             : '.';
 
-        $targetTarBall = static::getConfigValue('directories/data') . DIRECTORY_SEPARATOR . static::$environment['target'] . '-' . static::$releaseVersion . '.tgz';
+        $targetTarBall = static::getConfigValue('directories/data') . DIRECTORY_SEPARATOR . static::$target['target'] . '-' . static::$releaseVersion . '.tgz';
 
         $content = "#!/bin/bash\n" . 'tar -zcf ' . $targetTarBall . ' ' . implode(' ', $tarIncludeFolders) . "\n";
 
@@ -1043,6 +1056,30 @@ git push --tags
 
             // create symlink, but the ../ is ugly :-( but it must be relative
             static::executeCommand('ln -s ../' . $from . ' ' . $to, true);
+        }
+    }
+
+    /**
+     * removes unneeded magento modules
+     *
+     * @return mixed
+     */
+    protected static function removeModules()
+    {
+        $mrm = new ModuleRemover(static::$magentoRootDir, static::$io);
+
+        $buildTarget = isset(static::$target['build-target']) ? trim(static::$target['build-target']) : '';
+        if (true === empty($buildTarget)) {
+            return static::$io->write('<info>build-target not defined. Cannot remove any modules.</info>');
+        }
+
+        $modules = static::getConfigValue('targets/remove-modules/' . $buildTarget);
+        if (true === empty($modules)) {
+            return static::$io->write('<info>build-target is defined but remove-modules node is empty. No modules have been removed.</info>');
+        }
+        foreach ($modules as $module) {
+            $rmm = $mrm->remove($module);
+            static::$io->write('<info>Removed modules: ' . implode(', ', $rmm) . '.</info>');
         }
     }
 }

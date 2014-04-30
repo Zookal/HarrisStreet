@@ -34,14 +34,14 @@ class MageInstall extends ProjectHandlerAbstract
         if (
             false === static::$isRelease &&
             false === static::$dbConfig['dbTablesExists'] &&
-            (static::$environment['target'] === 'development' || static::$environment['target'] === 'staging')
+            (static::$target['target'] === 'development' || static::$target['target'] === 'staging')
         ) {
 
             static::dropCreateDatabase();
 
             $sqlDumpGz = static::getFilePath(array(
                 static::getConfigValue('directories/db-dump'),
-                static::$environment['target'] . '.sql.gz'
+                static::$target['target'] . '.sql.gz'
             ));
             if (true === file_exists($sqlDumpGz) && filesize($sqlDumpGz) > 4096) {
                 $result = static::importMySqlDump($sqlDumpGz);
@@ -56,6 +56,8 @@ class MageInstall extends ProjectHandlerAbstract
         static::handleFileSystem();
         static::handlePersistentDirectories();
         static::importCoreConfigData();
+
+        static::removeModules();
 
         if (false === static::$isRelease) {
             static::updatePhpStorm();

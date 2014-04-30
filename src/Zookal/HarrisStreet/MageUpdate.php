@@ -24,7 +24,7 @@ class MageUpdate extends ProjectHandlerAbstract
         static::handlePersistentDirectories();
         static::backupDataBase();
         static::importCoreConfigData();
-
+        static::removeModules();
         if (false === static::$isRelease) {
             static::updatePhpStorm();
         }
