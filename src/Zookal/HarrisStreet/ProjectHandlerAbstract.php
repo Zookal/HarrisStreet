@@ -1078,7 +1078,8 @@ git push --tags
             return static::$io->write('<info>build-target is defined but remove-modules node is empty. No modules have been removed.</info>');
         }
         foreach ($modules as $module) {
-            $mrm->remove($module);
+            $rmm = $mrm->remove($module);
+            static::$io->write('<info>Removed modules: ' . implode(', ', $rmm) . '.</info>');
         }
     }
 }

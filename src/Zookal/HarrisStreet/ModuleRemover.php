@@ -45,24 +45,28 @@ class ModuleRemover
     }
 
     /**
-     * @param string $moduleName
+     * @param $moduleName
+     *
+     * @return array
      */
     public function remove($moduleName)
     {
+        $removedModules = array();
         $modules = $this->_getInActiveModules();
         if (self::ALL_INACTIVE === strtolower($moduleName)) {
             foreach ($modules as $module) {
-                $this->_remove($module);
+                $removedModules[] = $this->_remove($module);
             }
         } else {
-            $this->_remove($moduleName);
+            $removedModules[] = $this->_remove($moduleName);
         }
+        return $removedModules;
     }
 
     /**
      * @param $moduleName
      *
-     * @return bool
+     * @return string
      */
     protected function _remove($moduleName)
     {
@@ -70,7 +74,7 @@ class ModuleRemover
         $this->_loadConfigXml();
 
         if (null === $this->_currentModuleConfigXml) {
-            return false;
+            return 'Not removed: '.$moduleName;
         }
 
         $layoutFiles = $this->_getLayoutUpdateFiles();
@@ -79,7 +83,7 @@ class ModuleRemover
         foreach ($allFiles as $file) {
             $this->_removeReal($file);
         }
-        return true;
+        return $moduleName;
     }
 
     /**
