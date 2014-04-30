@@ -14,7 +14,8 @@ use Zookal\HarrisStreet\Exceptions;
 
 class ModuleRemover
 {
-    const ALL_INACTIVE = 'all-inactive';
+    const MAGE_ADMINHTML = 'Mage_Adminhtml';
+    const ALL_INACTIVE   = 'all-inactive';
 
     /**
      * @var string
@@ -52,7 +53,7 @@ class ModuleRemover
     public function remove($moduleName)
     {
         $removedModules = array();
-        $modules = $this->_getInActiveModules();
+        $modules        = $this->_getInActiveModules();
         if (self::ALL_INACTIVE === strtolower($moduleName)) {
             foreach ($modules as $module) {
                 $removedModules[] = $this->_remove($module);
@@ -74,7 +75,7 @@ class ModuleRemover
         $this->_loadConfigXml();
 
         if (null === $this->_currentModuleConfigXml) {
-            return 'Not removed: '.$moduleName;
+            return 'Not removed: ' . $moduleName;
         }
 
         $layoutFiles = $this->_getLayoutUpdateFiles();
@@ -201,7 +202,31 @@ class ModuleRemover
         $return   = array();
         $return[] = $this->_path($this->_rootFolder, 'app', 'etc', 'modules', $this->_currentModuleName . '.xml');
         $return[] = $this->_path($this->_rootFolder, 'app', 'code', $this->_moduleCodePoolCache[$this->_currentModuleName], $parts[0], $parts[1]);
+
+        /**
+         * remove everything adminhtml related
+         */
+        if (self::MAGE_ADMINHTML === $this->_currentModuleName) {
+            $return = array_merge(
+                $return,
+                $this->_getFindResult('Adminhtml'),
+                $this->_getFindResult('adminhtml*'),
+                $this->_getFindResult('system.xml')
+            );
+        }
+
         return $return;
+    }
+
+    /**
+     * @param $name
+     *
+     * @return array
+     */
+    protected function _getFindResult($name)
+    {
+        $return = trim(shell_exec('find ' . $this->_rootFolder . ' -name "' . $name . '" -print0'));
+        return explode("\0", $return);
     }
 
     /**
