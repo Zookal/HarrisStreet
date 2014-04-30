@@ -173,11 +173,10 @@ class ModuleRemover
             //$xmlString    = file_get_contents($layoutFile);
             $securePrefix = basename($layoutFile, '.xml');
 
-            foreach (array('frontend', 'adminhtml') as $area) {
-                $area2              = 'frontend' === $area ? 'base' : 'default';
-                $folderPath         = $this->_path($this->_rootFolder, 'app', 'design', $area, $area2, 'default', 'template', $securePrefix);
-                $files[$folderPath] = $folderPath;
-            }
+            $area               = strpos($layoutFile, '/frontend/') !== false ? 'frontend' : 'adminhtml';
+            $area2              = 'frontend' === $area ? 'base' : 'default';
+            $folderPath         = $this->_path($this->_rootFolder, 'app', 'design', $area, $area2, 'default', 'template', $securePrefix);
+            $files[$folderPath] = $folderPath;
             /* too dangerous ...
              * to detect files via regex each template file must start with the string of basename(layoutfile.xml,'.xml')
              * otherwise we will match things like page/1column.phtml or catalog/product/list.phtml ... in other files
