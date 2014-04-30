@@ -73,7 +73,8 @@ class ModuleRemover
             return false;
         }
 
-        $allFiles = array_merge($this->_getTranslationFiles(), $this->_getLayoutUpdateFiles(), $this->_getModuleDirectoriesFiles());
+        $layoutFiles = $this->_getLayoutUpdateFiles();
+        $allFiles    = array_merge($this->_getTranslationFiles(), $layoutFiles, $this->_getModuleDirectoriesFiles(), $this->_getTemplateFiles($layoutFiles));
 
         foreach ($allFiles as $file) {
             $this->_removeReal($file);
@@ -87,8 +88,7 @@ class ModuleRemover
     protected function _removeReal($pathToFile)
     {
         $cmd = 'rm -Rf ' . $pathToFile;
-        echo "$cmd\n";
-        //trim(shell_exec($cmd));
+        trim(shell_exec($cmd));
     }
 
     /**
@@ -105,6 +105,9 @@ class ModuleRemover
         }
     }
 
+    /**
+     * @return array
+     */
     protected function _getTranslationFiles()
     {
         $files = array();
@@ -112,7 +115,7 @@ class ModuleRemover
             $modules = $this->_currentModuleConfigXml->xpath($area . '/translate/modules/' . $this->_currentModuleName . '/files');
             foreach ($modules as $fem) {
                 /** @var $fem \SimpleXMLElement */
-                foreach ($fem as $key => $fileName) {
+                foreach ($fem as $fileName) {
                     $filePath         = $this->_path($this->_rootFolder, 'app', 'locale', '*', (string)$fileName);
                     $files[$filePath] = $filePath;
                 }
@@ -127,35 +130,67 @@ class ModuleRemover
         return $return;
     }
 
+    /**
+     * @return array
+     */
     protected function _getLayoutUpdateFiles()
     {
         $files = array();
         foreach (array('frontend', 'adminhtml') as $area) {
             $modules = $this->_currentModuleConfigXml->xpath($area . '/layout/updates');
-            if(count($modules)>0){
-                var_dump([$modules,$this->_currentModuleName]); // @todo
-            }
-
             foreach ($modules as $fem) {
                 /** @var $fem \SimpleXMLElement */
-                foreach ($fem as $key => $fileName) {
-                    $filePath         = $this->_path($this->_rootFolder, 'app', 'locale', '*', (string)$fileName);
+                foreach ($fem as $fileName) {
+                    $layoutFile       = (string)$fileName->file;
+                    $area2            = 'frontend' === $area ? 'base' : 'default';
+                    $filePath         = $this->_path($this->_rootFolder, 'app', 'design', $area, $area2, 'default', 'layout', $layoutFile);
                     $files[$filePath] = $filePath;
                 }
             }
         }
 
-        return $files;
+        return array_values($files);
     }
 
-    protected function _getTemplateFiles()
+    /**
+     *
+     * @param array $layoutFiles
+     *
+     * @return array
+     */
+    protected function _getTemplateFiles(array $layoutFiles)
     {
-        // maybe preg_match_all for template="[^"]+" in all layout files
         $files = array();
+        if (0 === count($layoutFiles)) {
+            return $files;
+        }
+        foreach ($layoutFiles as $layoutFile) {
+            //$xmlString    = file_get_contents($layoutFile);
+            $securePrefix = basename($layoutFile, '.xml');
 
-        return $files;
+            foreach (array('frontend', 'adminhtml') as $area) {
+                $area2              = 'frontend' === $area ? 'base' : 'default';
+                $folderPath         = $this->_path($this->_rootFolder, 'app', 'design', $area, $area2, 'default', 'template', $securePrefix);
+                $files[$folderPath] = $folderPath;
+            }
+            /* too dangerous ...
+             * to detect files via regex each template file must start with the string of basename(layoutfile.xml,'.xml')
+             * otherwise we will match things like page/1column.phtml or catalog/product/list.phtml ... in other files
+            $matches      = array();
+            preg_match_all('~(' . $securePrefix . '[a-z0-9\-_/]+\.phtml)~i', $xmlString, $matches, PREG_SET_ORDER);
+            foreach($matches as $match){
+                if(isset($match[1])){
+                    $files[$match[1]] = $match[1];
+                }
+            } */
+        }
+
+        return array_values($files);
     }
 
+    /**
+     * @return array
+     */
     protected function _getModuleDirectoriesFiles()
     {
         $parts    = $this->_getNsMn();
