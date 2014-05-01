@@ -353,7 +353,7 @@ abstract class ProjectHandlerAbstract
         $parameters = static::getConfigValue('targets/' . static::$target['target'] . '/file-system');
 
         if (isset(static::$target['file-system']) && is_array(static::$target['file-system'])) {
-            $parameters = array_merge_recursive($parameters, static::$target['file-system']);
+            $parameters = $parameters + static::$target['file-system'];
         }
 
         if (false === is_array($parameters) || count($parameters) === 0) {
