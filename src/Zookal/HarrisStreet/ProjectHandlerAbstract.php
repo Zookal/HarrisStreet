@@ -860,10 +860,10 @@ git push origin staging
             'production' => '# Please run the following commands:
 
 # Tag the release
-git tag -m \'Tagging Release ' . static::$releaseVersion . '\' v' . static::$releaseVersion . '
+git tag -a -m \'Tagging Release ' . static::$releaseVersion . '\' v' . static::$releaseVersion . '
 
 # Push tags to remote server
-git push --tags
+git push && git push --tags
 
 # Create tarball for deployment on production server.
 ./' . static::getConfigValue('archive/script-name') . '
