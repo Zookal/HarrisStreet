@@ -17,11 +17,6 @@ Composer based Magento installer.
 option to either remove or keep the files.
 - integrate the target.json into the composer file and let the user choose for which target he/she wants to build, extend composer.
 - this readme!!!
-- create a symlink for `/<timestamp>/skin/...` but that needs a webserver rewrite
-- remove module Mage Downloader (needs mocking)
-- remove module Mage Install (needs mocking)
-- remove pkginfo folder in root
-- remove unused Magento origin themes i.e. all default themes
 - refactor code
 
 ### Description

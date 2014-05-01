@@ -1,0 +1,17 @@
+{
+    "target": "development|staging|master|jenkins",
+    "build-target": "frontend|backend",
+    "_local.xml": "/path/to/my/local.xml",
+
+    "phpstorm": {
+        "non-excluded-modules": [
+            "vendorName1/moduleName1",
+            "vendorName2/moduleName2"
+        ]
+    },
+    "file-system": {
+        "user": "my-unix-user-name",
+        "group": "my-unix-group-name"
+    },
+    "database-backup": false|true
+}
