@@ -54,11 +54,12 @@ class ModuleRemover
     {
         $removedModules = array();
         $modules        = $this->_getInActiveModules();
+
         if (self::ALL_INACTIVE === strtolower($moduleName)) {
             foreach ($modules as $module) {
                 $removedModules[] = $this->_remove($module);
             }
-        } else {
+        } elseif (isset($modules[$moduleName])) {
             $removedModules[] = $this->_remove($moduleName);
         }
         return $removedModules;
@@ -252,7 +253,16 @@ class ModuleRemover
 
         $inActiveModules = array();
         foreach ($moduleFiles as $file) {
-            $inActiveModules = array_merge($inActiveModules, $this->_getInActiveModulesFromFile($file));
+            $moduleList = $this->_getInActiveModulesFromFile($file);
+
+            foreach ($moduleList as $moduleName => $active) {
+                if (false === $active) {
+                    $inActiveModules[$moduleName] = $moduleName;
+                }
+                if (true === $active && isset($inActiveModules[$moduleName])) {
+                    unset($inActiveModules[$moduleName]);
+                }
+            }
         }
         return $inActiveModules;
     }
@@ -272,9 +282,9 @@ class ModuleRemover
         foreach ($modules->children() as $module) {
             /** @var $module \SimpleXMLElement */
             $isActive = (string)$module->active === 'true';
-            if (false === $isActive) {
-                $return[$module->getName()] = $module->getName();
-            }
+
+            $return[$module->getName()] = $isActive;
+
             if (!isset($this->_moduleCodePoolCache[$module->getName()])) {
                 $pool                                           = (string)$module->codePool;
                 $this->_moduleCodePoolCache[$module->getName()] = empty($pool) ? 'core' : $pool;
