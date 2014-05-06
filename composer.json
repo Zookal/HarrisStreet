@@ -11,8 +11,9 @@
     ],
     "minimum-stability": "dev",
     "require": {
-        "zookal/harris-street-impex":"dev-master",
-        "magento-hackathon/composer-command-integrator": "dev-master"
+        "zookal/harris-street-impex": "dev-master",
+        "magento-hackathon/composer-command-integrator": "dev-master",
+        "symfony/yaml": "*"
     },
     "require-dev": {
         "mikey179/vfsStream": "@stable",
