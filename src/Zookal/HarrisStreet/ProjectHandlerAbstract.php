@@ -537,6 +537,10 @@ abstract class ProjectHandlerAbstract
         $baseFolder    = static::getConfigValue('directories/config-mage-core');
         $envPath       = static::getConfigValue('targets/' . static::$target['target'] . '/config-path');;
 
+        if (empty($envPath)) {
+            throw new \InvalidArgumentException('Cannot find config path to to environment: ' . static::$target['target']);
+        }
+
         $info = false === static::$isRelease
             ? '<info>Setting Magento config values ...</info>'
             : '<info>Writing Magento config values to file: ' . $n98ScriptFile . '</info>';
@@ -549,7 +553,7 @@ abstract class ProjectHandlerAbstract
             $value = static::$releaseVersion;
             static::writeN98Mage('config:set "' . $path . '" "' . $value . '"');
         } else {
-            static::runN98Mage('hs:ccd:import ' . $baseFolder . ' ' . $envPath);
+            static::runN98Mage('hs:ccd:import --quiet ' . $baseFolder . ' ' . $envPath);
         }
     }
 
