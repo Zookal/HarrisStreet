@@ -18,10 +18,14 @@ class PhpStormConfigurator
     /**
      * @param $file
      *
-     * @return array
+     * @return array|bool
      */
     protected function loadXmlFile($file)
     {
+        if (false === file_exists($file)) {
+            return false;
+        }
+
         $xmlDeclaration = '<?xml version="1.0" encoding="UTF-8"?>';
         $content        = str_replace($xmlDeclaration, '', file_get_contents($file));;
         return array(
@@ -218,7 +222,7 @@ class PhpStormConfigurator
         $dirPrefix = '$PROJECT_DIR$';
         $return    = array();
         $vcs       = $this->loadXmlFile('.idea/vcs.xml');
-        if (!($vcs['xml'] instanceof \SimpleXMLElement)) {
+        if (empty($vcs) || !($vcs['xml'] instanceof \SimpleXMLElement)) {
             $return[] = array('msg' => 'PhpStorm vcs.xml not found.', 'type' => 'warning');
             return $return;
         }
