@@ -521,28 +521,6 @@ abstract class ProjectHandlerAbstract
     }
 
     /**
-     * Takes two array and overwrite the first with the second
-     *
-     * @param $array1
-     * @param $array2
-     *
-     * @return mixed
-     */
-    protected static function mergeConfigArrays(array $array1, array $array2)
-    {
-        $newArray = $array1;
-        foreach ($array2 as $path => $values) {
-            foreach ($values as $scope => $scopeValues) {
-                foreach ($scopeValues as $scopeId => $val) {
-                    $newArray[$path][$scope][$scopeId] = $val;
-                }
-            }
-        }
-
-        return $newArray;
-    }
-
-    /**
      * @todo refactor all of that and put it into a class
      */
     const DEFAULT_SCOPE  = 'default';
@@ -555,116 +533,23 @@ abstract class ProjectHandlerAbstract
     protected static function importCoreConfigData()
     {
 
+        $n98ScriptFile = static::$workDir . '/' . static::getConfigValue('n98-script/file');
+        $baseFolder    = static::getConfigValue('directories/config-mage-core');
+        $envPath       = static::getConfigValue('targets/' . static::$target['target'] . '/config-path');;
+
         $info = false === static::$isRelease
             ? '<info>Setting Magento config values ...</info>'
-            : '<info>Writing Magento config values to file: ' . static::getConfigValue('n98-script/file') . '</info>';
+            : '<info>Writing Magento config values to file: ' . $n98ScriptFile . '</info>';
 
         static::$io->write($info, true);
 
-        $baseConfig = static::getFilePath(array(
-            static::getConfigValue('directories/config-mage-core'),
-            'base.yml'
-        ));
-        $envConfig  = static::getFilePath(array(
-            static::getConfigValue('directories/config-mage-core'),
-            static::$target['target'] . '.yml'
-        ));
-        static::fileExists($baseConfig);
-        static::fileExists($envConfig);
-
-        $newConfig = static::mergeConfigArrays(Yaml::parse($baseConfig), Yaml::parse($envConfig));
-
-        $counter = array(
-            self::DEFAULT_SCOPE  => 0,
-            self::STORES_SCOPE   => 0,
-            self::WEBSITES_SCOPE => 0,
-        );
-
-        $stmt = null;
-        if (false === static::$isRelease) {
-            // reload db settings
-            static::loadDbConfig();
-            self::$mysqlPdoWrapper = null;
-            static::getDbConnection(true);
-
-            $sql  = 'INSERT INTO `' . static::$dbConfig['db_name'] . '`.`core_config_data` (`scope`,`scope_id`,`path`,`value`)
-            VALUES (:scope,:scope_id,:path,:value)
-            ON DUPLICATE KEY UPDATE `value` = VALUES(`value`)';
-            $pdo  = static::getDbConnection()->getPdo();
-            $stmt = $pdo->prepare($sql);
-        }
-
-        foreach ($newConfig as $path => $confData) {
-            // Save default scope
-            if (isset($confData[self::DEFAULT_SCOPE])) {
-                foreach ($confData[self::DEFAULT_SCOPE] as $scopeId => $value) {
-                    $value = (!$value && $value != 0) ? '' : $value;
-                    static::saveCoreConfig($stmt, $path, $value, self::DEFAULT_SCOPE, $scopeId);
-                    $counter[self::DEFAULT_SCOPE]++;
-                }
-            }
-            // Save stores scope
-            if (isset($confData[self::STORES_SCOPE])) {
-                foreach ($confData[self::STORES_SCOPE] as $scopeId => $value) {
-                    $value = (!$value && $value != 0) ? '' : $value;
-                    static::saveCoreConfig($stmt, $path, $value, self::STORES_SCOPE, $scopeId);
-                    $counter[self::STORES_SCOPE]++;
-                }
-            }
-            // Save websites scope
-            if (isset($confData[self::WEBSITES_SCOPE])) {
-                foreach ($confData[self::WEBSITES_SCOPE] as $scopeId => $value) {
-                    $value = (!$value && $value != 0) ? '' : $value;
-                    static::saveCoreConfig($stmt, $path, $value, self::WEBSITES_SCOPE, $scopeId);
-                    $counter[self::WEBSITES_SCOPE]++;
-                }
-            }
-        }
-
-        if (false === static::$isRelease) {
-            foreach ($counter as $scope => $count) {
-                static::$io->write('<info>Set Magento `' . $scope . '` config: ' . $count . ' values overwritten.</info>', true);
-            }
-        }
-    }
-
-    /**
-     * If building a release writes the data into a n98 script file
-     * If not building a release stores the values in a database
-     *
-     * @param \PDOStatement $stmt
-     * @param string        $path
-     * @param string        $value
-     * @param string        $scope
-     * @param int           $scopeId
-     *
-     * @return bool
-     */
-    private static function saveCoreConfig(\PDOStatement $stmt = null, $path, $value, $scope = 'default', $scopeId = 0)
-    {
-        $scopeId = (int)$scopeId;
-
         if (true === static::$isRelease) {
-
-            if (static::getConfigValue('mage-config-path-version') === strtolower($path)) {
-                $value = static::$releaseVersion;
-            }
-
-            $value = str_replace("\r", '', addcslashes($value, '"'));
-            $value = str_replace("\n", '\\n', $value);
-            static::writeN98Mage('config:set --scope=' . $scope . ' --scope-id=' . $scopeId . ' "' . $path . '" "' . $value . '"');
-            return true;
-        }
-
-        try {
-            return $stmt->execute(array(
-                ':scope'    => $scope,
-                ':scope_id' => $scopeId,
-                ':path'     => $path,
-                ':value'    => $value,
-            ));
-        } catch (\ErrorException $e) {
-            return false;
+            static::runN98Mage('hs:ccd:convert ' . $baseFolder . ' ' . $envPath . ' --export-file=' . $n98ScriptFile);
+            $path  = static::getConfigValue('mage-config-path-version');
+            $value = static::$releaseVersion;
+            static::writeN98Mage('config:set "' . $path . '" "' . $value . '"');
+        } else {
+            static::runN98Mage('hs:ccd:import ' . $baseFolder . ' ' . $envPath);
         }
     }
 
@@ -753,11 +638,11 @@ abstract class ProjectHandlerAbstract
         $result  = array();
         $result1 = $configurator->addGitRoots();
         if ($result1 !== false) {
-            $result = array_merge($result, $result1); // @todo fix that
+            $result = array_merge($result, $result1); // @todo fix that, what?
         }
         $result2 = $configurator->addExcludedFolders();
         if ($result2 !== false) {
-            $result = array_merge($result, $result2); // @todo fix that
+            $result = array_merge($result, $result2); // @todo fix that, what?
         }
 
         if (false !== $result) {
