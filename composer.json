@@ -11,8 +11,8 @@
     ],
     "minimum-stability": "dev",
     "require": {
-        "zookal/harris-street-impex": "dev-master",
-        "magento-hackathon/composer-command-integrator": "dev-master",
+        "zookal/harris-street-impex": "*",
+        "magento-hackathon/composer-command-integrator": "*",
         "symfony/yaml": "*"
     },
     "require-dev": {
