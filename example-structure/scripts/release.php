@@ -97,7 +97,7 @@ class Releaser
         // run incremental updates
         $this->_runCmd98('cache:clean');
         $this->_runCmd98('cache:flush');
-        $this->_runCmd98('sys:setup:incremental');
+        $this->_runCmd98('sys:setup:incremental --no-interaction');
 
         if (true === file_exists($this->_path([$this->_version, $this->_mageRunCfg['flag']]))) {
             $this->_runCmd('rm -Rf ' . $this->_symlinkTarget);
