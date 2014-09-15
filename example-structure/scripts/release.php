@@ -97,7 +97,7 @@ class Releaser
         // run incremental updates
         $this->_runCmd98('cache:clean');
         $this->_runCmd98('cache:flush');
-        $this->_runCmd98('sys:setup:incremental --no-interaction');
+        $this->_runCmd98('sys:setup:incremental -n'); // -n === --no-interaction
 
         if (true === file_exists($this->_path([$this->_version, $this->_mageRunCfg['flag']]))) {
             $this->_runCmd('rm -Rf ' . $this->_symlinkTarget);
@@ -129,7 +129,7 @@ class Releaser
 
     protected function _runCmd98($cmd)
     {
-        $this->_runCmd('cd ' . $this->_version . ' && php n98-magerun.phar ' . $cmd);
+        $this->_runCmd('cd ' . $this->_version . ' && php -f n98-magerun.phar -- ' . $cmd);
     }
 }
 
