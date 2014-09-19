@@ -69,6 +69,7 @@ class MageCheck extends ProjectHandlerAbstract
         try {
             self::getDbConnection();
         } catch (\PDOException $e) {
+            static::$io->write('<warning>PDO Message: ' . $e->getMessage() . '</warning>', true);
             $askRootData = true;
         }
 
