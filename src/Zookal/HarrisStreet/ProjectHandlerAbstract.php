@@ -17,7 +17,7 @@ abstract class ProjectHandlerAbstract
 {
     const N98_MAGRRUN_CMD = 'php n98-magerun.phar '; // @todo move into composer.json
     const COMPOSER_JSON = 'composer.json';
-    const LOCAL_XML     = 'local.xml';
+    const LOCAL_XML = 'local.xml';
     protected static $mysqlPdoWrapper = null;
     protected static $workDir = null;
     protected static $magentoInstallerConfig = array();
@@ -523,9 +523,9 @@ abstract class ProjectHandlerAbstract
     /**
      * @todo refactor all of that and put it into a class
      */
-    const DEFAULT_SCOPE  = 'default';
+    const DEFAULT_SCOPE = 'default';
     const WEBSITES_SCOPE = 'websites';
-    const STORES_SCOPE   = 'stores';
+    const STORES_SCOPE = 'stores';
 
     /**
      * loads the yaml config values into the database OR if we're building a release writes them into a n98 script file
@@ -849,7 +849,7 @@ git push && git push --tags
         static::fileExists($gitIgnoreName);
         $gitIgnore = file($gitIgnoreName);
         $found     = false;
-        foreach ($gitIgnore as $index => $gitLine) {
+        foreach ($gitIgnore as $index => &$gitLine) { // remove line breaks in the next line
             $gitLine = trim($gitLine);
             if (stristr($gitLine, static::$magentoRootDir) !== false) {
                 $found = true;
@@ -863,10 +863,10 @@ git push && git push --tags
             static::$io->write('<info>Removed folder ' . $rmMageRoot . ' from .gitignore file.</info>');
         }
 
-        $gitIgnore[] = '/' . static::getConfigValue('directories/config') . "\n";
-        $gitIgnore[] = '/composer.phar' . "\n";
-        $gitIgnore[] = static::getConfigValue('target-file') . "\n";
-        $written     = (int)file_put_contents($gitIgnoreName, implode('', $gitIgnore));
+        $gitIgnore[] = '/' . static::getConfigValue('directories/config');
+        $gitIgnore[] = '/composer.phar';
+        $gitIgnore[] = static::getConfigValue('target-file');
+        $written     = (int)file_put_contents($gitIgnoreName, implode("\n", $gitIgnore));
 
         if ($written === 0) {
             static::$io->write('<error>Cannot write to .gitignore file!</error>');
