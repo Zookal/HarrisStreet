@@ -840,10 +840,15 @@ git push && git push --tags
     }
 
     /**
-     *
+     * removes the config folder and adds that one plus some others to the gitignore file
      */
     protected static function updateGitIgnore()
     {
+        /**
+         * configuration folder is not needed in any release version
+         */
+        static::executeCommand('git rm --cached -r ' . static::getConfigValue('directories/config') . ' > /dev/null  2>&1', true);
+
         $rmMageRoot    = static::$magentoRootDir . '/';
         $gitIgnoreName = static::$workDir . '/.gitignore';
         static::fileExists($gitIgnoreName);
@@ -871,10 +876,6 @@ git push && git push --tags
         if ($written === 0) {
             static::$io->write('<error>Cannot write to .gitignore file!</error>');
         }
-        /**
-         * configuration folder is not needed in any release version
-         */
-        static::executeCommand('git rm --cached -r ' . static::getConfigValue('directories/config') . ' > /dev/null  2>&1', true);
     }
 
     /**
