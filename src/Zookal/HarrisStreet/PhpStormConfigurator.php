@@ -97,6 +97,11 @@ class PhpStormConfigurator
 
         $vendorDirs = explode("\n", trim(shell_exec('find ' . $this->getVendorDir() . ' -depth 2 -type d -print')));
         foreach ($vendorDirs as $secondLevelDir) {
+            $stripPath      = dirname(dirname(dirname($secondLevelDir))) . DIRECTORY_SEPARATOR;
+            $secondLevelDir = substr($secondLevelDir, 0, strlen($stripPath));
+            if (empty($secondLevelDir) || $secondLevelDir === DIRECTORY_SEPARATOR) {
+                continue;
+            }
             $attributeLink = 'file://$MODULE_DIR$/' . $secondLevelDir;
             if (is_dir($secondLevelDir) && !isset($existingNodes[$attributeLink]) && true === $this->isValidModuleDirForExclusion($secondLevelDir)) {
                 /** @var \SimpleXMLElement $folder */
