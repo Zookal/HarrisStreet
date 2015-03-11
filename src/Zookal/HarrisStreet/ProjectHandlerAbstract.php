@@ -20,11 +20,11 @@ abstract class ProjectHandlerAbstract
     const LOCAL_XML = 'local.xml';
     protected static $mysqlPdoWrapper = null;
     protected static $workDir = null;
-    protected static $magentoInstallerConfig = array();
+    protected static $magentoInstallerConfig = [];
     protected static $magentoRootDir = null;
     protected static $vendorDir = null;
     protected static $target = null;
-    protected static $dbConfig = array();
+    protected static $dbConfig = [];
     protected static $localXml = null;
     protected static $composerBinDir = null;
     protected static $currentGitBranchName = null;
@@ -98,7 +98,7 @@ abstract class ProjectHandlerAbstract
     {
         static::checkGitBranchValidSemVer(false);
 
-        $targetJsonFile = static::getFilePath(array(static::$workDir, static::getConfigValue('target-file')));
+        $targetJsonFile = static::getFilePath([static::$workDir, static::getConfigValue('target-file')]);
         static::fileExists($targetJsonFile);
 
         static::$target = json_decode(file_get_contents($targetJsonFile), true);
@@ -129,7 +129,9 @@ abstract class ProjectHandlerAbstract
             $localXml = static::$target[static::LOCAL_XML];
             static::$io->write('<comment>Loading custom ' . static::LOCAL_XML . ': ' . $localXml . '</comment>', true);
         } else {
-            $localXml = static::getFilePath(array(self::getConfigValue('directories/config-mage-xml'), static::$target['target'], static::LOCAL_XML));
+            $localXml = static::getFilePath([self::getConfigValue('directories/config-mage-xml'),
+                static::$target['target'], static::LOCAL_XML
+            ]);
         }
         $localXml = realpath($localXml);
         static::fileExists($localXml);
@@ -164,12 +166,12 @@ abstract class ProjectHandlerAbstract
         }
 
         $connection       = static::$localXml->global->resources->default_setup->connection;
-        static::$dbConfig = array(
+        static::$dbConfig = [
             'db_host' => (string)$connection->host,
             'db_user' => (string)$connection->username,
             'db_pass' => (string)$connection->password,
             'db_name' => (string)$connection->dbname,
-        );
+        ];
         return true;
     }
 
@@ -243,7 +245,7 @@ abstract class ProjectHandlerAbstract
     {
         $connection = static::$localXml->global->resources->default_setup->connection;
 
-        $queries   = array();
+        $queries   = [];
         $queries[] = sprintf('GRANT USAGE ON *.* TO `%s`@`%s`;', $connection->username, $connection->fromHost);
         $queries[] = sprintf('DROP USER `%s`@`%s`;', $connection->username, $connection->host);
         $queries[] = sprintf('CREATE USER `%s`@`%s` IDENTIFIED BY %s;',
@@ -266,7 +268,7 @@ abstract class ProjectHandlerAbstract
     protected static function dropCreateDatabase()
     {
         $connection = static::$localXml->global->resources->default_setup->connection;
-        $queries    = array();
+        $queries    = [];
         $queries[]  = sprintf('DROP DATABASE IF EXISTS `%s`;', $connection->dbname);
         $queries[]  = sprintf('CREATE DATABASE `%s` DEFAULT CHARACTER SET %s COLLATE %s;',
             $connection->dbname,
@@ -316,22 +318,25 @@ abstract class ProjectHandlerAbstract
     protected static function linkLocalXmlFiles()
     {
         $localXml = static::getLocalXmlFilePath();
-        $files    = array(
-            array(
-                'from' => array($localXml),
-                'to'   => array(static::$magentoRootDir, 'app', 'etc', static::LOCAL_XML),
-            ),
-            array(
-                'from' => array('..', '..', '..', static::getConfigValue('directories/config-mage-xml'), static::$target['target'],
+        $files    = [
+            [
+                'from' => [$localXml],
+                'to'   => [static::$magentoRootDir, 'app', 'etc', static::LOCAL_XML],
+            ],
+            [
+                'from' => ['..', '..', '..', static::getConfigValue('directories/config-mage-xml'),
+                    static::$target['target'],
                     static::LOCAL_XML . '.phpunit'
-                ),
-                'to'   => array(static::$magentoRootDir, 'app', 'etc', static::LOCAL_XML . '.phpunit'),
-            ),
-            array(
-                'from' => array('..', '..', static::getConfigValue('directories/config-mage-xml'), static::$target['target'], 'errors', static::LOCAL_XML),
-                'to'   => array(static::$magentoRootDir, 'errors', static::LOCAL_XML),
-            ),
-        );
+                ],
+                'to'   => [static::$magentoRootDir, 'app', 'etc', static::LOCAL_XML . '.phpunit'],
+            ],
+            [
+                'from' => ['..', '..', static::getConfigValue('directories/config-mage-xml'), static::$target['target'],
+                    'errors', static::LOCAL_XML
+                ],
+                'to'   => [static::$magentoRootDir, 'errors', static::LOCAL_XML],
+            ],
+        ];
 
         foreach ($files as $file) {
             $from = static::getFilePath($file['from']);
@@ -412,17 +417,17 @@ abstract class ProjectHandlerAbstract
         static::$io->write('<comment>Running Magento install: php -f install.php</comment>', true);
 
         // move local.xml file
-        $oldLocalXml = static::getFilePath(array(static::$magentoRootDir, 'app', 'etc', static::LOCAL_XML));
+        $oldLocalXml = static::getFilePath([static::$magentoRootDir, 'app', 'etc', static::LOCAL_XML]);
         if (file_exists($oldLocalXml)) {
             @rename($oldLocalXml, $oldLocalXml . '.' . date('Y-m-d-H-i-s'));
             static::$io->write('<comment>Moved old ' . static::LOCAL_XML . ' to a new file name.</comment>', true);
         }
 
-        $parametersFile = static::getFilePath(array(
+        $parametersFile = static::getFilePath([
             static::getConfigValue('directories/config-mage-xml'),
             static::$target['target'],
             'install.yml'
-        ));
+        ]);
         static::fileExists($parametersFile);
 
         $newPassword = md5(mt_rand() . uniqid() . time());
@@ -430,7 +435,7 @@ abstract class ProjectHandlerAbstract
         $parameters = Yaml::parse($parametersFile);
         $connection = static::$localXml->global->resources->default_setup->connection;
 
-        $installParams = array(
+        $installParams = [
             'license_agreement_accepted' => 'yes',
             'encryption_key'             => (string)static::$localXml->global->crypt->key,
             'db_host'                    => (string)$connection->host,
@@ -439,11 +444,11 @@ abstract class ProjectHandlerAbstract
             'db_pass'                    => (string)$connection->password,
             'admin_password'             => $newPassword,
             'skip_url_validation'        => 'yes',
-        );
+        ];
 
         $installParams = array_merge($parameters, $installParams);
 
-        $installParamsString = array();
+        $installParamsString = [];
         foreach ($installParams as $key => $value) {
             $installParamsString[] = '--' . $key . ' ' . escapeshellarg($value);
         }
@@ -463,10 +468,10 @@ abstract class ProjectHandlerAbstract
      */
     private static function getCryptConfig()
     {
-        return array(
+        return [
             'key'  => ((string)static::$localXml->global->crypt->key) . date('YmdH'),
             'file' => '/tmp/mageComposerInstaller.ser',
-        );
+        ];
     }
 
     /**
@@ -632,14 +637,14 @@ abstract class ProjectHandlerAbstract
         $configurator = new PhpStormConfigurator();
         $configurator->setRootDir(static::$magentoRootDir);
         $configurator->setVendorDir(static::$vendorDir);
-        $config = isset(static::$magentoInstallerConfig['phpstorm']) ? static::$magentoInstallerConfig['phpstorm'] : array();
+        $config = isset(static::$magentoInstallerConfig['phpstorm']) ? static::$magentoInstallerConfig['phpstorm'] : [];
 
         if (isset(static::$target['phpstorm']) && is_array(static::$target['phpstorm']) && count(static::$target['phpstorm']) > 0) {
             $config = array_merge_recursive($config, static::$target['phpstorm']);
         }
         $configurator->setConfig($config);
 
-        $result  = array();
+        $result  = [];
         $result1 = $configurator->addGitRoots();
         if ($result1 !== false) {
             $result = array_merge($result, $result1); // @todo fix that, what?
@@ -664,7 +669,35 @@ abstract class ProjectHandlerAbstract
      */
     protected static function writeN98Mage($command)
     {
-        return file_put_contents(static::$workDir . '/' . static::getConfigValue('n98-script/file'), $command . "\n", FILE_APPEND);
+        return file_put_contents(static::getN98MageScriptFile(), $command . "\n", FILE_APPEND);
+    }
+
+    /**
+     * @return string
+     */
+    protected static function getN98MageScriptFile()
+    {
+        return static::$workDir . '/' . static::getConfigValue('n98-script/file');
+    }
+
+    /**
+     * Replaces all occurrences of __VERSION__ with the release version in the n98 script file.
+     */
+    protected static function setVersionN98Mage()
+    {
+        if (true === static::$isRelease) {
+            $written = file_put_contents(
+                static::getN98MageScriptFile(),
+                str_replace(
+                    file_get_contents(static::getN98MageScriptFile()),
+                    '__VERSION__',
+                    static::$releaseVersion
+                )
+            );
+            if (false === $written) {
+                throw new \Exception('Cannot write to file: ' . static::getN98MageScriptFile());
+            }
+        }
     }
 
     /**
@@ -687,6 +720,7 @@ abstract class ProjectHandlerAbstract
         static::writeN98Mage('cache:clean');
         static::writeN98Mage('cache:flush');
         static::writeN98Mage('! touch ' . static::getConfigValue('n98-script/success-flag'));
+        static::setVersionN98Mage();
 
         static::releaseCompactComposerJson();
         static::releaseUpdateReadme();
@@ -708,7 +742,7 @@ abstract class ProjectHandlerAbstract
          */
         $gitLog         = static::getConfigValue('directories/data') . DIRECTORY_SEPARATOR . 'git.' . static::$releaseVersion . '.log';
         $tmpArchiveName = 'new-release.tar';
-        $commandChain   = array(
+        $commandChain   = [
             'git add --all .',
             'git commit -a -m \'Creating Release ' . static::$releaseVersion . '\'',
             'git archive --format=tar -o ' . $tmpArchiveName . ' HEAD',
@@ -723,7 +757,7 @@ abstract class ProjectHandlerAbstract
             'git add --all .',
             'git commit -a -m \'Creating Release ' . static::$releaseVersion . '\'',
             'git branch -D ' . static::getCurrentGitBranch(),
-        );
+        ];
 
         foreach ($commandChain as $command) {
             file_put_contents($gitLog, $command . "\n", FILE_APPEND);
@@ -735,7 +769,7 @@ abstract class ProjectHandlerAbstract
         }
         static::$io->write('<info>Wrote git output to file: ' . $gitLog . '</info>');
 
-        $hints = array(
+        $hints = [
 
             /* STAGING */
             'staging'    => '# Please run the following commands:
@@ -759,7 +793,7 @@ git push && git push --tags
 
 # Upload the zip file to the production server and run the release script.
 ',
-        );
+        ];
 
         static::$io->write('<info>' . (isset($hints[static::$target['target']])
                 ? $hints[static::$target['target']]
@@ -775,13 +809,13 @@ git push && git push --tags
     {
         if (true === file_exists(static::getConfigValue('readme'))) {
             $readme = file_get_contents(static::getConfigValue('readme'));
-            $readme = str_replace(array(
+            $readme = str_replace([
                 '{{version}}',
                 '{{date}}'
-            ), array(
+            ], [
                 static::$releaseVersion,
                 date('Y-m-d H:i:s')
-            ), $readme);
+            ], $readme);
             file_put_contents(static::getConfigValue('readme'), $readme);
         }
     }
@@ -794,7 +828,7 @@ git push && git push --tags
     protected static function releaseCompactComposerJson()
     {
         $json = json_decode(file_get_contents(static::COMPOSER_JSON), true);;
-        $removeKeys = array('require', 'require-dev', 'scripts', 'repositories', 'config');
+        $removeKeys = ['require', 'require-dev', 'scripts', 'repositories', 'config'];
         foreach ($removeKeys as $key) {
             if (isset($json[$key])) {
                 unset($json[$key]);
@@ -892,7 +926,7 @@ git push && git push --tags
             throw new \Exception('Release Prefix branch name cannot be empty!');
         }
 
-        $matches = array();
+        $matches = [];
         $branch  = static::getCurrentGitBranch();
         $re      = '/^' . preg_quote($branchPrefix) .
             '(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)(?:-(?P<pres>[\da-z\-]+(?:\.[\da-z\-]+)*))?(?:\+(?P<posts>[\da-z\-]+(?:\.[\da-z\-]+)*))?$/i';
@@ -900,7 +934,7 @@ git push && git push --tags
             throw new Exceptions\BranchNotFound($branch, $branchPrefix);
         }
         if (!isset($matches[0])) {
-            $matches = array($branch);
+            $matches = [$branch];
         }
 
         static::$releaseVersion = str_replace($branchPrefix, '', $matches[0]);
@@ -934,8 +968,8 @@ git push && git push --tags
         }
 
         foreach ($symlinks as $directory) {
-            $from = static::getFilePath(array($dataDir, $directory));
-            $to   = static::getFilePath(array(static::$magentoRootDir, $directory));
+            $from = static::getFilePath([$dataDir, $directory]);
+            $to   = static::getFilePath([static::$magentoRootDir, $directory]);
 
             if (true === is_dir($to)) {
                 static::executeCommand('rm -Rf ' . $to, true); // remove directory
