@@ -689,9 +689,9 @@ abstract class ProjectHandlerAbstract
             $written = file_put_contents(
                 static::getN98MageScriptFile(),
                 str_replace(
-                    file_get_contents(static::getN98MageScriptFile()),
                     '__VERSION__',
-                    static::$releaseVersion
+                    static::$releaseVersion,
+                    file_get_contents(static::getN98MageScriptFile())
                 )
             );
             if (false === $written) {
