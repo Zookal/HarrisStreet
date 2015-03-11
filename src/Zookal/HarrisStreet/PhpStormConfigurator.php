@@ -13,7 +13,7 @@ class PhpStormConfigurator
 {
     protected $rootDir = '';
     protected $vendorDir = '';
-    protected $config = array();
+    protected $config = [];
 
     /**
      * @param $file
@@ -28,10 +28,10 @@ class PhpStormConfigurator
 
         $xmlDeclaration = '<?xml version="1.0" encoding="UTF-8"?>';
         $content        = str_replace($xmlDeclaration, '', file_get_contents($file));;
-        return array(
+        return [
             'xml'  => new \SimpleXMLElement($xmlDeclaration . "\n" . '<stormroot>' . $content . '</stormroot>'),
             'file' => $file
-        );
+        ];
     }
 
     /**
@@ -42,7 +42,7 @@ class PhpStormConfigurator
      */
     protected function writeXmlFile($file, $xmlContent)
     {
-        $xmlContent = str_replace(array('<stormroot>', '</stormroot>'), '', $xmlContent);
+        $xmlContent = str_replace(['<stormroot>', '</stormroot>'], '', $xmlContent);
         return file_put_contents($file, $xmlContent);
     }
 
@@ -75,7 +75,7 @@ class PhpStormConfigurator
      */
     public function addExcludedFolders()
     {
-        $return = array();
+        $return = [];
 
         $stormDir = '.idea';
         if (!is_dir($stormDir)) {
@@ -84,11 +84,11 @@ class PhpStormConfigurator
 
         $iml = $this->getPhpStormIml();
         if (false === $iml || !isset($iml['xml']->module)) {
-            $return[] = array('msg' => 'PhpStorm .iml file not found.', 'type' => 'info');
+            $return[] = ['msg' => 'PhpStorm .iml file not found.', 'type' => 'info'];
             return $return;
         }
 
-        $existingNodes = array();
+        $existingNodes = [];
         foreach ($iml['xml']->module->component->content->children() as $child) {
             $attributes          = $child->attributes();
             $url                 = (string)$attributes['url'];
@@ -123,9 +123,9 @@ class PhpStormConfigurator
 
         if ($xmlContent !== false) {
             $this->writeXmlFile($iml['file'], $xmlContent);
-            $return[] = array('msg' => 'PhpStorm .iml rewritten with new excluded folders!', 'type' => 'info');
+            $return[] = ['msg' => 'PhpStorm .iml rewritten with new excluded folders!', 'type' => 'info'];
         } else {
-            $return[] = array('msg' => 'Failed to write PhpStorm .iml file.', 'type' => 'warning');
+            $return[] = ['msg' => 'Failed to write PhpStorm .iml file.', 'type' => 'warning'];
         }
         return $return;
     }
@@ -138,10 +138,10 @@ class PhpStormConfigurator
         $nonExcludedModules = $this->getConfig('non-excluded-modules');
         $match              = true;
         if (null === $nonExcludedModules) {
-            return array();
+            return [];
         }
 
-        $moduleMappings = array();
+        $moduleMappings = [];
         foreach ($nonExcludedModules as $repo) {
             $basePath         = $this->getVendorDir() . DIRECTORY_SEPARATOR . $repo . DIRECTORY_SEPARATOR;
             $repoComposerJson = $basePath . 'composer.json';
@@ -160,7 +160,7 @@ class PhpStormConfigurator
             }
         }
 
-        $returnDirs = array();
+        $returnDirs = [];
         foreach ($moduleMappings as $mapped) {
             if (true === $this->isValidDirForExclusion($mapped[1])) {
                 $returnDirs[] = $mapped[1];
@@ -176,12 +176,12 @@ class PhpStormConfigurator
      */
     protected function isValidDirForExclusion($dirName)
     {
-        $dirs = array(
-            array('app', 'code'),
-            array('lib'),
-            array('shell'),
-            array('js'),
-        );
+        $dirs = [
+            ['app', 'code'],
+            ['lib'],
+            ['shell'],
+            ['js'],
+        ];
 
         $return = false;
         foreach ($dirs as $dir) {
@@ -220,14 +220,14 @@ class PhpStormConfigurator
     public function addGitRoots()
     {
         $dirPrefix = '$PROJECT_DIR$';
-        $return    = array();
+        $return    = [];
         $vcs       = $this->loadXmlFile('.idea/vcs.xml');
         if (empty($vcs) || !($vcs['xml'] instanceof \SimpleXMLElement)) {
-            $return[] = array('msg' => 'PhpStorm vcs.xml not found.', 'type' => 'warning');
+            $return[] = ['msg' => 'PhpStorm vcs.xml not found.', 'type' => 'warning'];
             return $return;
         }
 
-        $currentDirs = array();
+        $currentDirs = [];
         foreach ($vcs['xml']->project->component->mapping as $mapping) {
             $attr                     = $mapping->attributes();
             $currentDir               = (string)$attr['directory'];
@@ -238,6 +238,8 @@ class PhpStormConfigurator
         // @todo check for name="VcsDirectoryMappings"
         foreach ($gitFolders as $folder) {
             $folder    = rtrim(DIRECTORY_SEPARATOR . str_replace('.git', '', $folder), '/');
+            $stripPath = dirname(dirname(dirname($folder))) . DIRECTORY_SEPARATOR;
+            $folder    = substr($folder, 0, strlen($stripPath));
             $addFolder = $dirPrefix . $folder;
             if (!isset($currentDirs[$addFolder]) && false === $this->isValidModuleDirForExclusion($folder)) {
                 $mapped = $vcs['xml']->project->component->addChild('mapping');
@@ -249,9 +251,9 @@ class PhpStormConfigurator
         $xmlContent = $vcs['xml']->asXML();
         if ($xmlContent !== false) {
             $this->writeXmlFile($vcs['file'], $xmlContent);
-            $return[] = array('msg' => 'PhpStorm vcs.xml added new GIT mappings', 'type' => 'info');
+            $return[] = ['msg' => 'PhpStorm vcs.xml added new GIT mappings', 'type' => 'info'];
         } else {
-            $return[] = array('msg' => 'Failed to write PhpStorm vcs.xml file.', 'type' => 'warning');
+            $return[] = ['msg' => 'Failed to write PhpStorm vcs.xml file.', 'type' => 'warning'];
         }
         return $return;
     }
