@@ -29,7 +29,7 @@ class PreBase
     public function run()
     {
         $this->_loadComposerJson();
-        $this->_checkRelease();
+        //$this->_checkRelease();
 
         if (false === is_dir($this->_dataDir)) {
             mkdir($this->_dataDir, 0751);
